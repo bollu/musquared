@@ -73,12 +73,13 @@ def AwesomeAddOp : Lean_Op<"awesome_add"> {
   }];
 
   let arguments = (ins I64:$lhs, I64:$rhs);
-  let results = (outs I64:$result);
+//   let results = (outs I64:$result);
 
   // Allow building an AddOp with from the two input operands.
-  let builders = [
-    OpBuilder<"Builder *b, OperationState &state, Value lhs, Value rhs">
-  ];
+//   let builders = [
+//     OpBuilder<"Builder *b, OperationState &state, Value lhs, Value rhs">
+//   ];
+
   // custom parser. WART: was unable to find this in toy???
   let parser = [{ return ::parse$cppClass(parser, result); }];
 }

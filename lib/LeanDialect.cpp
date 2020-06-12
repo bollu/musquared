@@ -308,11 +308,11 @@ LogicalResult CppPrintUnboxedIntOp::verify() {
 #undef GET_OP_CLASSES 
 
 // this needs to be here so it can see add
-void AwesomeAddOp::build(mlir::Builder *builder, mlir::OperationState &state,
-                  mlir::Value lhs, mlir::Value rhs) {
-  state.addTypes(builder->getIntegerType(64));  // IntegerType::get(builder->getF64Type()));
-  state.addOperands({lhs, rhs});
-}
+// void AwesomeAddOp::build(mlir::Builder *builder, mlir::OperationState &state,
+//                   mlir::Value lhs, mlir::Value rhs) {
+//   state.addTypes(builder->getIntegerType(64));  // IntegerType::get(builder->getF64Type()));
+//   state.addOperands({lhs, rhs});
+// }
 
 
 namespace mlir {
@@ -334,6 +334,9 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
 
   if (parser.resolveOperand(inputOperand2, parser.getBuilder().getIntegerType(64), result.operands))
     return mlir::failure();
+
+  llvm::outs () << "parsed AwesomeAdd: " << inputOperand1.name << " | " << inputOperand2.name << "\n";
+  // assert(false);
 
   return mlir::success();
 }

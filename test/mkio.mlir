@@ -6,10 +6,11 @@ module {
                  %arg2: !lean.IO<none>) {          
     %x = constant 10 : i64         
     %y = constant 20: i64
-    %awesomeadd_stringy = "lean.awesome_add"(%x, %y) : (i64, i64) -> i64 
+    %z = constant 30 : i32
+    // %awesomeadd_stringy = "lean.awesome_add"(%x, %y) : (i64, i64) -> i64 
     // %awesomeadd_call = lean.awesome_add %x, %y : i64
-    lean.awesome_add %x, %y 
-    
+    // lean.awesome_add %x, %y 
+    lean.awesome_add %x, %y
     %print_stringy = "lean.print_unboxed_int"(%x)  : (i64) -> !lean.IO<none> loc("example/file/path":1:1)
     // lean.print_unboxed_int %x : i32 loc("example/file/path":1:1)
     return
