@@ -39,8 +39,10 @@ public:
 
 };
 
+// forward declare custom storage types.
 namespace detail {
 struct StructTypeStorage;
+struct IOTypeStorage;
 } // end namespace detail
 
 /// Create a local enumeration with all of the types that are defined by Toy.
@@ -48,6 +50,7 @@ namespace LeanTypes {
   enum Types {
     Struct = mlir::Type::FIRST_TOY_TYPE,
     Simple,
+    IO
   };
 } // end namespace ToyTypes
 
@@ -77,6 +80,23 @@ public:
   /// Returns the number of element type held by this struct.
   size_t getNumElementTypes() { return getElementTypes().size(); }
 };
+
+class IOType : public mlir::Type::TypeBase<IOType, mlir::Type,
+                                               detail::IOTypeStorage> {
+public:
+  /// Inherit some necessary constructors from 'TypeBase'.
+  using Base::Base;
+
+  /// This static method is used to support type inquiry through isa, cast,
+  /// and dyn_cast.
+  static bool kindof(unsigned kind) { return kind == LeanTypes::IO; }
+
+  static IOType get(mlir::Type elementTypes);
+
+  /// Returns the element types of this struct type.
+  mlir::Type getElementType();
+};
+
 
 /// This class defines a simple parameterless type. All derived types must
 /// inherit from the CRTP class 'Type::TypeBase'. It takes as template

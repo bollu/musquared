@@ -8,6 +8,8 @@
 - [SPIR-V dialect base tablegen](https://github.com/bollu/mlir/blob/master/include/mlir/Dialect/SPIRV/SPIRVBase.td)
 - [SPIR-V dialect header](https://github.com/bollu/mlir/blob/master/include/mlir/Dialect/SPIRV/SPIRVDialect.h)
 - [SPIR-V dialect cpp](https://github.com/bollu/mlir/blob/master/lib/Dialect/SPIRV/SPIRVDialect.cpp)
+- [SPIR-V types header](https://github.com/bollu/mlir/blob/master/include/mlir/Dialect/SPIRV/SPIRVTypes.h)
+- [SPIR-V types cpp](https://github.com/bollu/mlir/blob/master/lib/Dialect/SPIRV/SPIRVTypes.cpp)
 
 ### Round tripping
 

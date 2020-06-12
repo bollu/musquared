@@ -150,6 +150,12 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
 }
 
 int main(int argc, char **argv) {
+  outs() << "Kind enumeration:\n" 
+    << "simple: " << lean::LeanTypes::Simple 
+    << " | struct: " << lean::LeanTypes::Struct 
+    << " | IO: " << lean::LeanTypes::IO << "\n";
+  // assert(false);
+
   // Regster all MLIR dialects and passes
   registerAllDialects();
   registerAllPasses();

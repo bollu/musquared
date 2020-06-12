@@ -3,6 +3,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "mlir/IR/Module.h"
+#include "mlir/IR/Types.h"
 #include "mlir/Support/LLVM.h"
 #include "mlir/Support/LogicalResult.h"
 #include "mlir/Support/STLExtras.h"
@@ -26,7 +27,7 @@ LeanDialect::LeanDialect(mlir::MLIRContext *context)
 
 
   // addInterfaces<ToyInlinerInterface>();
-  addTypes<StructType, SimpleType>();
+  addTypes<StructType, SimpleType, IOType>();
 
   addOperations<
 #define GET_OP_LIST
@@ -93,7 +94,64 @@ struct StructTypeStorage : public mlir::TypeStorage {
 
   /// The following field contains the element types of the struct.
   llvm::ArrayRef<mlir::Type> elementTypes;
-};
+}; // end struct StructTypeStorage
+
+struct IOTypeStorage : public mlir::TypeStorage {
+  /// The `KeyTy` is a required type that provides an interface for the storage
+  /// instance. This type will be used when uniquing an instance of the type
+  /// storage. For our struct type, we will unique each instance structurally on
+  /// the elements that it contains.
+  using KeyTy = mlir::Type;
+
+  /// A constructor for the type storage instance.
+  IOTypeStorage(mlir::Type elementType) : elementType(elementType) {}
+
+  /// Define the comparison function for the key type with the current storage
+  /// instance. This is used when constructing a new instance to ensure that we
+  /// haven't already uniqued an instance of the given key.
+  bool operator==(const KeyTy &key) const { return key == KeyTy(elementType); }
+
+  /// Define a hash function for the key type. This is used when uniquing
+  /// instances of the storage, see the `StructType::get` method.
+  /// Note: This method isn't necessary as both llvm::ArrayRef and mlir::Type
+  /// have hash functions available, so we could just omit this entirely.
+  static llvm::hash_code hashKey(const KeyTy &key) {
+    return mlir::hash_value((mlir::Type)key);
+    // return llvm::hash_value(key.impl);
+
+    // return llvm::getHashValue(key);
+    // return llvm::hash_value(key);
+  }
+
+  /// Define a construction function for the key type from a set of parameters.
+  /// These parameters will be provided when constructing the storage instance
+  /// itself.
+  /// Note: This method isn't necessary because KeyTy can be directly
+  /// constructed with the given parameters.
+  static KeyTy getKey(mlir::Type elementType) {
+    return elementType;
+  }
+
+  /// Define a construction method for creating a new instance of this storage.
+  /// This method takes an instance of a storage allocator, and an instance of a
+  /// `KeyTy`. The given allocator must be used for *all* necessary dynamic
+  /// allocations used to create the type storage and its internal.
+  static IOTypeStorage *construct(mlir::TypeStorageAllocator &allocator,
+                                      const KeyTy &key) {
+    // Copy the elements from the provided `KeyTy` into the allocator.
+    // mlir::Type elementType = allocator.copyInto(key);
+
+    // TODO: understand if I need to create a copy of `elementType`
+    //       as well?
+  
+    // Allocate the storage instance and construct it.
+    return new (allocator.allocate<IOTypeStorage>()) IOTypeStorage(key);
+  }
+
+  /// The following field contains the element types of the struct.
+  mlir::Type elementType;
+}; // end struct IOTypeStorage
+
 } // end namespace detail
 } // end namespace lean
 } // end namespace mlir
@@ -113,13 +171,33 @@ StructType StructType::get(llvm::ArrayRef<mlir::Type> elementTypes) {
   assert(ctx && "invalid ctx");
   StructType st = Base::get(ctx, LeanTypes::Struct, elementTypes);
   return st;
-
 }
+
 
 /// Returns the element types of this struct type.
 llvm::ArrayRef<mlir::Type> StructType::getElementTypes() {
   // 'getImpl' returns a pointer to the internal storage instance.
   return getImpl()->elementTypes;
+}
+
+
+IOType IOType::get(mlir::Type elementType) {
+
+  // Call into a helper 'get' method in 'TypeBase' to get a uniqued instance
+  // of this type. The first two parameters are the context to unique in and the
+  // kind of the type. The parameters after the type kind are forwarded to the
+  // storage instance.
+  mlir::MLIRContext *ctx = elementType.getContext();
+  assert(ctx && "invalid ctx");
+  IOType st = Base::get(ctx, LeanTypes::IO, elementType);
+  return st;
+
+}
+
+
+mlir::Type IOType::getElementType() {
+  // 'getImpl' returns a pointer to the internal storage instance.
+  return getImpl()->elementType;
 }
 
 
@@ -142,9 +220,17 @@ mlir::Type LeanDialect::parseType(mlir::DialectAsmParser &parser) const {
       SimpleType t = SimpleType::get(parser.getBuilder().getContext());
       llvm::errs() << "\tParsed a rawtype!: |" << t.getKind() << " ~= " << LeanTypes::Simple <<  "|\n";
       return t;
-  } else {
-    llvm::errs() << "\tFailed at parsing a simple type\n";
   }
+  
+  // else {
+  //   llvm::errs() << "\tFailed at parsing a simple type\n";
+  // }
+
+Type t;
+if (succeeded(parser.parseOptionalKeyword("IO"))) {  
+    parser.parseLess(); parser.parseType(t); parser.parseGreater();
+    return IOType::get(t);
+}
 
   // Parse: `struct` `<`
   if (parser.parseKeyword("struct") || parser.parseLess())
@@ -199,9 +285,13 @@ void LeanDialect::printType(mlir::Type type,
     printer << '>';
   } else if(SimpleType simpleType = type.dyn_cast<SimpleType>()) {
     printer << "simple";
+  } else if (IOType ioType = type.dyn_cast<IOType>()) {
+    printer << "IO<" << ioType.getElementType() << ">";
   } else {
-    llvm::errs() << "unknown tuype: |" << type << "|\n";
-    printer << "UNK\n";
+    llvm::errs() << "unknown type:\n"; // |" << type << "|\n";
+    llvm::errs() << "(DIALECT:" << type.getDialect().getNamespace() << 
+        " | KIND: " << type.getKind() << ")\n";
+    printer << "UNK: " << type << "\n";
     assert(false);
   }
 }

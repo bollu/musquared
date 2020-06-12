@@ -53,9 +53,9 @@ def Lean_StructType :
 def Lean_SimpleType :
     Type<CPred<"$_self.isa<SimpleType>()">, "Lean simple type">;
 
+def Lean_IOType :
+    Type<CPred<"$_self.isa<IOType>()">, "Lean IO type">;
+
 // Provide a definition of the types that are used within the Toy dialect.
 def Lean_Type : AnyTypeOf<[F64Tensor, Lean_StructType, Lean_SimpleType]>;
-
-
-
 #endif // LEAN_OPS
