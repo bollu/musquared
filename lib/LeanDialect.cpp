@@ -29,10 +29,11 @@ LeanDialect::LeanDialect(mlir::MLIRContext *context)
 
   // addInterfaces<ToyInlinerInterface>();
   addTypes<StructType, SimpleType, IOType>();
-
+  addOperations<CppPrintUnboxedIntOp>();
   addOperations<
 #define GET_OP_LIST
 #include "LeanOps.cpp.inc"
+#undef GET_OP_LIST
       >();
 
 
@@ -297,6 +298,45 @@ void LeanDialect::printType(mlir::Type type,
   }
 }
 
+
+LogicalResult CppPrintUnboxedIntOp::verify() {
+  return success();
+}
 // much magic, very wow :(
 #define GET_OP_CLASSES
 #include "LeanOps.cpp.inc"
+#undef GET_OP_CLASSES 
+
+// this needs to be here so it can see add
+void AwesomeAddOp::build(mlir::Builder *builder, mlir::OperationState &state,
+                  mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(builder->getIntegerType(64));  // IntegerType::get(builder->getF64Type()));
+  state.addOperands({lhs, rhs});
+}
+
+
+namespace mlir {
+namespace lean {
+mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
+                                      mlir::OperationState &result) {
+  // Parse the input operand, the attribute dictionary, and the type of the
+  // input.
+  mlir::OpAsmParser::OperandType inputOperand1;
+  mlir::OpAsmParser::OperandType inputOperand2;
+  if (parser.parseOperand(inputOperand1) ||
+      parser.parseComma() ||
+      parser.parseOperand(inputOperand2))
+    return mlir::failure();
+
+  // Resolve the input operand to the type we parsed in.
+  if (parser.resolveOperand(inputOperand1, parser.getBuilder().getIntegerType(64), result.operands))
+    return mlir::failure();
+
+  if (parser.resolveOperand(inputOperand2, parser.getBuilder().getIntegerType(64), result.operands))
+    return mlir::failure();
+
+  return mlir::success();
+}
+
+} // end namespace lean
+} // end namespace mlir

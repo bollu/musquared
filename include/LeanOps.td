@@ -1,6 +1,8 @@
 #ifndef LEAN_OPS
 #define LEAN_OPS
 
+// https://mlir.llvm.org/docs/OpDefinitions/
+
 include "mlir/Interfaces/SideEffects.td"
 include "mlir/Interfaces/CallInterfaces.td"
 
@@ -57,12 +59,40 @@ def Lean_IOType :
     Type<CPred<"$_self.isa<IOType>()">, "Lean IO type">;
 
 // Provide a definition of the types that are used within the Toy dialect.
-def Lean_Type : AnyTypeOf<[F64Tensor, Lean_StructType, Lean_SimpleType]>;
+// class v/s def?
+def LeanIO : AnyTypeOf<[Lean_IOType]>;
 
+def PrintUnboxedIntOp : Lean_Op<"printUnboxedInt"> {
+}
 
+def AwesomeAddOp : Lean_Op<"awesome_add"> {
+  let summary = "element-wise addition operation";
+  let description = [{
+    The "awesomeadd" operation performs element-wise addition between two tensors.
+    The shapes of the tensor operands are expected to match.
+  }];
+
+  let arguments = (ins I64:$lhs, I64:$rhs);
+  let results = (outs I64:$result);
+
+  // Allow building an AddOp with from the two input operands.
+  let builders = [
+    OpBuilder<"Builder *b, OperationState &state, Value lhs, Value rhs">
+  ];
+  // custom parser. WART: was unable to find this in toy???
+  let parser = [{ return ::parse$cppClass(parser, result); }];
+}
+
+/*
+/// SPV_I32Vec4
 /// Consider a stripped definition of `toy.print` here.
-def PrintPrimIntOp : Lean_Op<"print_prim_int"> {
+/// TOY tutorial is woefully incomplete. It doesn't teach you enough of ODS
+/// to be useful. Fuck this, go read SPIR-V definitions.
+def PrintUnboxedIntOp : Lean_Op<"print_unboxed_int"> {
   let arguments = (ins I32:$input);
+  let results = (outs 
+                    LeanIO:$result
+                );
 
   // Divert the printer and parser to static functions in our .cpp
   // file that correspond to 'print' and 'printPrintOp'. 'printer' and 'parser'
@@ -72,4 +102,5 @@ def PrintPrimIntOp : Lean_Op<"print_prim_int"> {
   let parser = [{ return ::parse$cppClass(parser, result); }];
   let assemblyFormat = "$input attr-dict `:` type($input)";
 }
+*/
 #endif // LEAN_OPS
