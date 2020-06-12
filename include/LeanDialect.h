@@ -170,7 +170,7 @@ class CppPrintUnboxedIntOp : public mlir::Op<CppPrintUnboxedIntOp,
 
 mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
                                       mlir::OperationState &result);
-
+void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p);
 
 
 

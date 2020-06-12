@@ -82,6 +82,10 @@ def AwesomeAddOp : Lean_Op<"awesome_add"> {
 
   // custom parser. WART: was unable to find this in toy???
   let parser = [{ return ::parse$cppClass(parser, result); }];
+  // WART, LMAO: WTF, the _variable names_ are hard-coded, so we need
+  // to name this `p`.
+  let printer = [{ ::print$cppClass(this, p); }];
+
 }
 
 /*

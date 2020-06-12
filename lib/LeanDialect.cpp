@@ -340,6 +340,9 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
 
   return mlir::success();
 }
+void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p) {
+  p << "lean.awesome_add " << op->getOperand(0) << ", " << op->getOperand(1);
+}
 
 } // end namespace lean
 } // end namespace mlir
