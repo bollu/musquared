@@ -28,7 +28,7 @@ LeanDialect::LeanDialect(mlir::MLIRContext *context)
 
 
   // addInterfaces<ToyInlinerInterface>();
-  addTypes<StructType, SimpleType, IOType>();
+  addTypes<StructType, SimpleType, IOType, BoxedI64Type>();
   addOperations<CppPrintUnboxedIntOp>();
   addOperations<
 #define GET_OP_LIST
@@ -223,6 +223,10 @@ mlir::Type LeanDialect::parseType(mlir::DialectAsmParser &parser) const {
       llvm::errs() << "\tParsed a rawtype!: |" << t.getKind() << " ~= " << LeanTypes::Simple <<  "|\n";
       return t;
   }
+
+  if (succeeded(parser.parseOptionalKeyword("BoxedI64"))) {  
+    return BoxedI64Type::get(parser.getBuilder().getContext());
+  }
   
   // else {
   //   llvm::errs() << "\tFailed at parsing a simple type\n";
@@ -289,7 +293,11 @@ void LeanDialect::printType(mlir::Type type,
     printer << "simple";
   } else if (IOType ioType = type.dyn_cast<IOType>()) {
     printer << "IO<" << ioType.getElementType() << ">";
-  } else {
+  }
+  else if (type.isa<BoxedI64Type>()) {
+    printer << "BoxedI64";
+  } 
+  else {
     llvm::errs() << "unknown type:\n"; // |" << type << "|\n";
     llvm::errs() << "(DIALECT:" << type.getDialect().getNamespace() << 
         " | KIND: " << type.getKind() << ")\n";
@@ -300,7 +308,10 @@ void LeanDialect::printType(mlir::Type type,
 
 
 LogicalResult CppPrintUnboxedIntOp::verify() {
-  return success();
+  if (IOType t = this->getResult().getType().dyn_cast<IOType>()) {
+    return success();
+  }
+  return failure();
 }
 // much magic, very wow :(
 #define GET_OP_CLASSES
@@ -346,6 +357,18 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
 void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p) {
   p << "lean.awesome_add " << op->getOperand(0) << ", " << op->getOperand(1);
 }
+
+
+
+LogicalResult verifyPrintUnboxedIntOp(PrintUnboxedIntOp *op) {
+  // GG. When the fuck is verify() called?
+  assert(false && "unable to verify unboxed int");
+    if (IOType t = op->getResult().getType().dyn_cast<IOType>()) {
+    return success();
+  }
+  return failure();
+}
+
 
 } // end namespace lean
 } // end namespace mlir

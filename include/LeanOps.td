@@ -58,11 +58,15 @@ def Lean_SimpleType :
 def Lean_IOType :
     Type<CPred<"$_self.isa<IOType>()">, "Lean IO type">;
 
-// Provide a definition of the types that are used within the Toy dialect.
-// class v/s def?
-def LeanIO : AnyTypeOf<[Lean_IOType]>;
+def Lean_BoxedI64Type :
+    Type<CPred<"$_self.isa<BoxedI64Type>()">, "Lean Boxed I64 type">;
 
 def PrintUnboxedIntOp : Lean_Op<"printUnboxedInt"> {
+
+  let arguments = (ins I64:$input);
+  let results = (outs Lean_IOType:$result);
+
+  let verifier = [{ ::verify$cppClass(this); }];
 }
 
 def AwesomeAddOp : Lean_Op<"awesome_add"> {

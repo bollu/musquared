@@ -50,7 +50,8 @@ namespace LeanTypes {
   enum Types {
     Struct = mlir::Type::FIRST_TOY_TYPE,
     Simple,
-    IO
+    IO,
+    BoxedI64
   };
 } // end namespace ToyTypes
 
@@ -123,6 +124,18 @@ public:
 };
 
 
+class BoxedI64Type : public Type::TypeBase<BoxedI64Type, Type> {
+public:
+  using Base::Base;
+  static bool kindof(unsigned kind) { return kind == LeanTypes::BoxedI64; }
+
+  /// This method is used to get an instance of the 'SimpleType'. Given that
+  /// this is a parameterless type, it just needs to take the context for
+  /// uniquing purposes.
+  static BoxedI64Type get(MLIRContext *context) { return Base::get(context, LeanTypes::BoxedI64); }
+};
+
+
 class CppPrintUnboxedIntOp : public mlir::Op<CppPrintUnboxedIntOp,
                      /// The ConstantOp takes no inputs.
                      mlir::OpTrait::OneOperand,
@@ -172,6 +185,7 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
                                       mlir::OperationState &result);
 void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p);
 
+LogicalResult verifyPrintUnboxedIntOp(PrintUnboxedIntOp *op);
 
 
 } // end namespace lean
