@@ -338,6 +338,9 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
   llvm::outs () << "parsed AwesomeAdd: " << inputOperand1.name << " | " << inputOperand2.name << "\n";
   // assert(false);
 
+  // Where is the result.addType API?
+  result.addTypes({parser.getBuilder().getIntegerType(64) });
+
   return mlir::success();
 }
 void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p) {

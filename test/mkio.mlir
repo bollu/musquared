@@ -10,7 +10,7 @@ module {
     // %awesomeadd_stringy = "lean.awesome_add"(%x, %y) : (i64, i64) -> i64 
     // %awesomeadd_call = lean.awesome_add %x, %y : i64
     // lean.awesome_add %x, %y 
-    lean.awesome_add %x, %y
+    %out = lean.awesome_add %x, %y
     %print_stringy = "lean.print_unboxed_int"(%x)  : (i64) -> !lean.IO<none> loc("example/file/path":1:1)
     // lean.print_unboxed_int %x : i32 loc("example/file/path":1:1)
     return

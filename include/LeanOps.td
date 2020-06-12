@@ -73,7 +73,7 @@ def AwesomeAddOp : Lean_Op<"awesome_add"> {
   }];
 
   let arguments = (ins I64:$lhs, I64:$rhs);
-//   let results = (outs I64:$result);
+  let results = (outs I64:$r);
 
   // Allow building an AddOp with from the two input operands.
 //   let builders = [
