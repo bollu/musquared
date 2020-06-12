@@ -58,4 +58,18 @@ def Lean_IOType :
 
 // Provide a definition of the types that are used within the Toy dialect.
 def Lean_Type : AnyTypeOf<[F64Tensor, Lean_StructType, Lean_SimpleType]>;
+
+
+/// Consider a stripped definition of `toy.print` here.
+def PrintPrimIntOp : Lean_Op<"print_prim_int"> {
+  let arguments = (ins I32:$input);
+
+  // Divert the printer and parser to static functions in our .cpp
+  // file that correspond to 'print' and 'printPrintOp'. 'printer' and 'parser'
+  // here correspond to an instance of a 'OpAsmParser' and 'OpAsmPrinter'. More
+  // details on these classes is shown below.
+  let printer = [{ return ::print(printer, *this); }];
+  let parser = [{ return ::parse$cppClass(parser, result); }];
+  let assemblyFormat = "$input attr-dict `:` type($input)";
+}
 #endif // LEAN_OPS

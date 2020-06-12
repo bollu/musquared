@@ -1,4 +1,5 @@
 #include "LeanDialect.h"
+#include "LeanOps.h"
 #include "mlir/IR/Attributes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/DialectImplementation.h"
@@ -295,3 +296,7 @@ void LeanDialect::printType(mlir::Type type,
     assert(false);
   }
 }
+
+// much magic, very wow :(
+#define GET_OP_CLASSES
+#include "LeanOps.cpp.inc"
