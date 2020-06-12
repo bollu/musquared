@@ -29,7 +29,7 @@ LeanDialect::LeanDialect(mlir::MLIRContext *context)
 
   // addInterfaces<ToyInlinerInterface>();
   addTypes<StructType, SimpleType, IOType, BoxedI64Type>();
-  addOperations<CppPrintUnboxedIntOp>();
+  // addOperations<CppPrintUnboxedIntOp>();
   addOperations<
 #define GET_OP_LIST
 #include "LeanOps.cpp.inc"
@@ -307,12 +307,6 @@ void LeanDialect::printType(mlir::Type type,
 }
 
 
-LogicalResult CppPrintUnboxedIntOp::verify() {
-  if (IOType t = this->getResult().getType().dyn_cast<IOType>()) {
-    return success();
-  }
-  return failure();
-}
 // much magic, very wow :(
 #define GET_OP_CLASSES
 #include "LeanOps.cpp.inc"
