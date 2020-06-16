@@ -160,7 +160,8 @@ public:
 
 };
 
-class ReturnOp : public Op<ReturnOp, OpTrait::ZeroResult, OpTrait::ZeroSuccessor, OpTrait::ZeroOperands, OpTrait::IsTerminator> {
+class ReturnOp : 
+  public Op<ReturnOp, OpTrait::ZeroResult, OpTrait::ZeroSuccessor, OpTrait::OneOperand, OpTrait::IsTerminator> {
 public:
   using Op::Op;
   // using OperandAdaptor = AwesomeAddOpOperandAdaptor;

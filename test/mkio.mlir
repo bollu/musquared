@@ -18,7 +18,7 @@ module {
     %foo = "lean.bar"(%x)  : (i64) -> f64 loc("example/file/path":1:1)
     %print_boxx = lean.case(%x : i64, f64, [] { 
       %a = constant 20 : i64
-      lean.return
+      lean.return %a : i64
     }) // , i64)
     // lean.case(%box  i64) 
     // lean.print_unboxed_int %x : i32 loc("example/file/path":1:1)

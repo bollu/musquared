@@ -444,6 +444,17 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
 }
 
 ParseResult ReturnOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
+  mlir::OpAsmParser::OperandType retoperand; 
+  Type retty;
+  if(parser.parseOperand(retoperand)) return failure();
+  if (parser.parseColon()) return failure();
+  if (parser.parseType(retty)) return failure();
+
+  // how do I pass the type inference information?
+  SmallVector<Value, 1> retval;
+  parser.resolveOperand(retoperand, retty, retval);
+  result.addOperands({retval });
+  // result.addOperands(retval);
   return success();
 }
 
