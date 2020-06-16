@@ -423,7 +423,8 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
     Region *r = result.addRegion();
     llvm::outs() << __LINE__ << "\n";
     // parser.parseRegion(*r, regionArgs, {scrutineeTy});
-    parser.parseRegion(*r, {}, {});
+    parser.parseRegion(*r, regionArgs, {scrutineeTy});
+    
     llvm::outs() << __LINE__ << "\n";
 
   } while (succeeded(parser.parseOptionalComma()));
