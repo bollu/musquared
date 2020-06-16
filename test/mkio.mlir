@@ -15,11 +15,9 @@ module {
     %out = lean.awesome_add %x, %y
     %print_stringy = "lean.print_unboxed_int"(%x)  : (i64) -> !lean.IO<none> loc("example/file/path":1:1)
     %print_incorrect = "lean.print_unboxed_int"(%x)  : (i64) -> f64 loc("example/file/path":1:1)
-    
-    // %print_boxx = case %boxx of {
-    //   "PrimInt" %unbox -> lean.print_unboxed_int(%unbox)
-    // };
-
+    %foo = "lean.bar"(%x)  : (i64) -> f64 loc("example/file/path":1:1)
+    %print_boxx = lean.case(%box  i64) // , i64)
+    // lean.case(%box  i64) 
     // lean.print_unboxed_int %x : i32 loc("example/file/path":1:1)
     return
   }

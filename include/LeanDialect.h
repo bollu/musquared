@@ -135,6 +135,29 @@ public:
   static BoxedI64Type get(MLIRContext *context) { return Base::get(context, LeanTypes::BoxedI64); }
 };
 
+/*
+class AltOp : public Op<AltOp, OpTrait::OneResult, OpTrait::ZeroSuccessor, OpTrait::VariadicOperands> {
+public:
+  using Op::Op;
+  // using OperandAdaptor = AwesomeAddOpOperandAdaptor;
+  static StringRef getOperationName() { return "lean.alt"; };
+  static ParseResult parse(OpAsmParser &parser, OperationState &result);
+  void print(OpAsmPrinter &p);
+  LogicalResult verify();
+};
+*/
+
+
+class CaseOp : public Op<CaseOp, OpTrait::OneResult, OpTrait::ZeroSuccessor, OpTrait::AtLeastNOperands<1>::Impl> {
+public:
+  using Op::Op;
+  // using OperandAdaptor = AwesomeAddOpOperandAdaptor;
+  static StringRef getOperationName() { return "lean.case"; };
+  static ParseResult parse(OpAsmParser &parser, OperationState &result);
+  // void print(OpAsmPrinter &p);
+  // LogicalResult verify();
+
+};
 
 
 

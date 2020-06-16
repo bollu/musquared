@@ -36,6 +36,9 @@ LeanDialect::LeanDialect(mlir::MLIRContext *context)
 #undef GET_OP_LIST
       >();
 
+  addOperations<CaseOp>();
+  // addOperations>AltOp>();
+  
 
   // addTypes<SimpleType>();
   
@@ -261,7 +264,7 @@ if (succeeded(parser.parseOptionalKeyword("IO"))) {
     if (parser.parseType(elementType))
       return nullptr;
 
-    // Check that the type is either a TensorType or another StructType.
+    // Check that the type is either a T    ensorType or another StructType.
     if (!elementType.isa<mlir::TensorType>() &&
         !elementType.isa<StructType>()) {
       parser.emitError(typeLoc, "element type for a struct must either "
@@ -348,9 +351,66 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
 
   return mlir::success();
 }
-void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p) {
-  p << "lean.awesome_add " << op->getOperand(0) << ", " << op->getOperand(1);
+
+
+ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
+  llvm::outs() << "vvvPARSING CASEvvvv\n";
+
+  // case(CASE-SCRUTINEE, RETTY)
+  // or
+  // case (CASE-SCRUTINEE, RETTY, ALTS) 
+
+  if (parser.parseLParen()) return failure();
+  llvm::outs () << "\t-(\n";
+
+  
+  // CASE-SCRUTINEE
+  mlir::OpAsmParser::OperandType opin; 
+  if (parser.parseOperand(opin)) return failure();
+
+  // if (parser.parseRParen()) return failure();
+  // return success();
+
+  llvm::outs() << "\t-" << opin.name << "\n";
+
+  // if (parser.parseComma()) return failure();
+
+  Type retty;
+
+  // RETTY
+  if (parser.parseType(retty)) return failure();
+  llvm::outs() << "\t-" << retty << "\n";
+  result.addTypes({retty});
+
+  // parser.parseComma();
+
+  
+
+  // )
+  if(succeeded(parser.parseRParen())) {
+    llvm::outs () << "\t-)\n";
+    return success();
+  }
+
+  // ARG, 
+  do {
+    SmallVector<mlir::OpAsmParser::OperandType, 4> regionArgs;
+    parser.parseRegionArgumentList(regionArgs, mlir::OpAsmParser::Delimiter::OptionalSquare);
+  } while (succeeded(parser.parseOptionalComma()));
+
+  if(parser.parseRParen()) {
+    return failure();
+  }
+  
+  return success();
+
+  // either we have:
+  // 1. )
+  // 2. ALT , ALTS
+
 }
+
+  static ParseResult parse(OpAsmParser &parser, OperationState &result);
 
 
 
@@ -363,6 +423,9 @@ LogicalResult verifyPrintUnboxedIntOp(PrintUnboxedIntOp *op) {
   return failure();
 }
 
+void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p) {
+  p << "lean.awesome_add " << op->getOperand(0) << ", " << op->getOperand(1);
+}
 
 } // end namespace lean
 } // end namespace mlir
