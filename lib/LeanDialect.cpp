@@ -19,6 +19,9 @@
 using namespace mlir;
 using namespace mlir::lean;
 
+// static DialectRegistration<LeanDialect> StandardOps;
+
+
 //===----------------------------------------------------------------------===//
 // Lean Dialect
 //===----------------------------------------------------------------------===//
@@ -37,6 +40,7 @@ LeanDialect::LeanDialect(mlir::MLIRContext *context)
       >();
 
   addOperations<CaseOp>();
+  addOperations<ReturnOp>();
   // addOperations>AltOp>();
   
 
@@ -353,10 +357,16 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
 }
 
 
+// https://reviews.llvm.org/D72223
 ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
+
+  mlir::OpAsmParser::OperandType scrutinee; 
+  Type scrutineeTy;
+  Type retty;
+
   llvm::outs() << "vvvPARSING CASEvvvv\n";
 
-  // case(CASE-SCRUTINEE, RETTY)
+  // case(CASE-SCRUTINEE : SCURUTINEETY, RETTY, ALTS)
   // or
   // case (CASE-SCRUTINEE, RETTY, ALTS) 
 
@@ -365,52 +375,77 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
 
   
   // CASE-SCRUTINEE
-  mlir::OpAsmParser::OperandType opin; 
-  if (parser.parseOperand(opin)) return failure();
+  if (parser.parseOperand(scrutinee)) return failure();
 
   // if (parser.parseRParen()) return failure();
   // return success();
 
-  llvm::outs() << "\t-" << opin.name << "\n";
+  llvm::outs() << "\t-" << scrutinee.name << "\n";
 
   // if (parser.parseComma()) return failure();
 
-  Type retty;
+  if(parser.parseColon()) return failure();
 
-  // RETTY
-  if (parser.parseType(retty)) return failure();
-  llvm::outs() << "\t-" << retty << "\n";
-  result.addTypes({retty});
+  // scrutineeTy
+  if (parser.parseType(scrutineeTy)) return failure();
+  llvm::outs() << "\t-" << scrutineeTy << "\n";
+  result.addTypes({scrutineeTy});
 
-  // parser.parseComma();
-
+  SmallVector<Value, 1> resolvedScrutinee;
+  parser.resolveOperand(scrutinee, scrutineeTy, resolvedScrutinee);
+  result.addOperands(resolvedScrutinee);
+  
+  if(parser.parseComma()) return failure();
   
 
+  if(parser.parseType(retty)) return failure();
+  
   // )
-  if(succeeded(parser.parseRParen())) {
+  if(succeeded(parser.parseOptionalRParen())) {
     llvm::outs () << "\t-)\n";
     return success();
+  } else if (parser.parseComma()) {
+    llvm::outs() << __LINE__ << "\n";
+    return failure();
   }
+
+  llvm::outs() << __LINE__ << "\n";
 
   // ARG, 
   do {
+    llvm::outs() << __LINE__ << "\n";
     SmallVector<mlir::OpAsmParser::OperandType, 4> regionArgs;
     parser.parseRegionArgumentList(regionArgs, mlir::OpAsmParser::Delimiter::OptionalSquare);
+    llvm::outs() << __LINE__ << "\n";
+    llvm::outs() << "\t- #region args:" << regionArgs.size() << "\n";
+    if (regionArgs.size()) llvm::outs() << "\t-region arg[0]:  " << regionArgs[0].name << "\n";
+    llvm::outs() << __LINE__ << "\n";
+    Region *r = result.addRegion();
+    llvm::outs() << __LINE__ << "\n";
+    // parser.parseRegion(*r, regionArgs, {scrutineeTy});
+    parser.parseRegion(*r, {}, {});
+    llvm::outs() << __LINE__ << "\n";
+
   } while (succeeded(parser.parseOptionalComma()));
 
+  llvm::outs() << __LINE__ << "\n";
+
   if(parser.parseRParen()) {
+    llvm::outs() << __LINE__ << "\n";
     return failure();
   }
   
+  llvm::outs() << __LINE__ << "\n";
   return success();
 
   // either we have:
   // 1. )
   // 2. ALT , ALTS
-
 }
 
-  static ParseResult parse(OpAsmParser &parser, OperationState &result);
+ParseResult ReturnOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
+  return success();
+}
 
 
 
@@ -426,6 +461,8 @@ LogicalResult verifyPrintUnboxedIntOp(PrintUnboxedIntOp *op) {
 void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p) {
   p << "lean.awesome_add " << op->getOperand(0) << ", " << op->getOperand(1);
 }
+
+
 
 } // end namespace lean
 } // end namespace mlir

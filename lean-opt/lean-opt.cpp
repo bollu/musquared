@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
   registerAllPasses();
 
   // Register the lean dialect
-  registerDialect<lean::LeanDialect>();
+  // registerDialect<lean::LeanDialect>();
 
   // Register the lean passes
 
@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
   
   errs() << "parsed input!\n";
 
-  // mlir::registerDialect<mlir::lean::LeanDialect>();
+  mlir::registerDialect<mlir::lean::LeanDialect>();
 
   mlir::MLIRContext context;
   mlir::OwningModuleRef module;

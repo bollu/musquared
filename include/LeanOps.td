@@ -93,6 +93,10 @@ def AwesomeAddOp : Lean_Op<"awesome_add"> {
 
 }
 
+def LeanTerminatorOp :
+    Lean_Op<"terminator", [Terminator]> {
+  let summary = "affine terminator operation";
+}
 
 
 /*

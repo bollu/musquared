@@ -39,6 +39,7 @@ public:
 
 };
 
+
 // forward declare custom storage types.
 namespace detail {
 struct StructTypeStorage;
@@ -148,7 +149,7 @@ public:
 */
 
 
-class CaseOp : public Op<CaseOp, OpTrait::OneResult, OpTrait::ZeroSuccessor, OpTrait::AtLeastNOperands<1>::Impl> {
+class CaseOp : public Op<CaseOp, OpTrait::OneResult, OpTrait::ZeroSuccessor> {
 public:
   using Op::Op;
   // using OperandAdaptor = AwesomeAddOpOperandAdaptor;
@@ -159,6 +160,16 @@ public:
 
 };
 
+class ReturnOp : public Op<ReturnOp, OpTrait::ZeroResult, OpTrait::ZeroSuccessor, OpTrait::ZeroOperands, OpTrait::IsTerminator> {
+public:
+  using Op::Op;
+  // using OperandAdaptor = AwesomeAddOpOperandAdaptor;
+  static StringRef getOperationName() { return "lean.return"; };
+  static ParseResult parse(OpAsmParser &parser, OperationState &result);
+  // void print(OpAsmPrinter &p);
+  // LogicalResult verify();
+
+};
 
 
 #define GET_OP_CLASSES
