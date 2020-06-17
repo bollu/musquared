@@ -363,6 +363,8 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
   mlir::OpAsmParser::OperandType scrutinee; 
   Type scrutineeTy;
   Type retty;
+  SmallVector<Value, 1> resolvedScrutinee;
+
 
   llvm::outs() << "vvvPARSING CASEvvvv\n";
 
@@ -391,7 +393,6 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
   llvm::outs() << "\t-" << scrutineeTy << "\n";
   result.addTypes({scrutineeTy});
 
-  SmallVector<Value, 1> resolvedScrutinee;
   parser.resolveOperand(scrutinee, scrutineeTy, resolvedScrutinee);
   result.addOperands(resolvedScrutinee);
   
@@ -399,6 +400,7 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
   
 
   if(parser.parseType(retty)) return failure();
+  // result.addTypes({retty});
   
   // )
   if(succeeded(parser.parseOptionalRParen())) {
@@ -421,11 +423,33 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
     if (regionArgs.size()) llvm::outs() << "\t-region arg[0]:  " << regionArgs[0].name << "\n";
     llvm::outs() << __LINE__ << "\n";
     Region *r = result.addRegion();
+    
+    // can I validate here? worth a shot.
+   
+
+
     llvm::outs() << __LINE__ << "\n";
+    
     // parser.parseRegion(*r, regionArgs, {scrutineeTy});
     parser.parseRegion(*r, regionArgs, {scrutineeTy});
     
     llvm::outs() << __LINE__ << "\n";
+    for(Block &BB : r->getBlocks()) {
+      llvm::outs() << __LINE__ << "\n";
+      assert(BB.getTerminator() != nullptr);
+      if (ReturnOp retop = dyn_cast<ReturnOp>(BB.getTerminator())) {
+        llvm::outs() << __LINE__ << "\n";
+        // llvm::errs() << "-retop: "; retop.print(llvm::errs());
+        // llvm::errs() << "\n-retop operand: "; retop.getOperand().print(llvm::errs());
+        // llvm::errs() << "\n-retop operand type: "; retop.getOperand().getType(); 
+        if(retop.getOperandType() != retty) {
+          auto diagnostic = parser.emitError(parser.getCurrentLocation(), "mismatched alt type and return type");
+          // diagnostic << "alt type ["; 
+          return diagnostic;
+        }
+      }
+  }
+  llvm::outs() << __LINE__ << "\n";
 
   } while (succeeded(parser.parseOptionalComma()));
 
@@ -442,6 +466,29 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
   // either we have:
   // 1. )
   // 2. ALT , ALTS
+}
+
+LogicalResult CaseOp::verify() {
+
+
+  for(int i = 0; i < getNumAlts(); i++) {
+    for(auto &BB : getAlt(i).getBlocks()) {
+      assert(BB.getTerminator() != nullptr);
+      if (ReturnOp retop = dyn_cast<ReturnOp>(BB.getTerminator())) {
+        llvm::errs() << "-retop: "; retop.print(llvm::errs());
+        llvm::errs() << "\n-retop operand: "; retop.getOperand().print(llvm::errs());
+        llvm::errs() << "\n-retop operand type: "; retop.getOperand().getType(); 
+
+        llvm::errs() << "\n-our return type: " << getReturnType() << "\n";
+        assert(retop.getOperandType() == this->getReturnType());
+      }
+      // (*BB.getTerminator())
+      // llvm::errs() << "BB:\n" << *BB.getTerminator() << "\n";
+
+      // }
+    }
+  }
+
 }
 
 ParseResult ReturnOp::parse(mlir::OpAsmParser &parser, OperationState &result) {

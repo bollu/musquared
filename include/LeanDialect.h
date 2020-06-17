@@ -155,8 +155,14 @@ public:
   // using OperandAdaptor = AwesomeAddOpOperandAdaptor;
   static StringRef getOperationName() { return "lean.case"; };
   static ParseResult parse(OpAsmParser &parser, OperationState &result);
+  Value getScrutinee() { return getOperation()->getOperand(0); }
+  OpResult getReturn() { return getOperation()->getResult(0); }
+  Type getReturnType() { return getReturn().getType(); }
+
+  size_t getNumAlts() { return getOperation()->getNumRegions(); };
+  Region &getAlt(int idx) { return getOperation()->getRegion(idx); };
   // void print(OpAsmPrinter &p);
-  // LogicalResult verify();
+  LogicalResult verify();
 
 };
 
@@ -167,6 +173,7 @@ public:
   // using OperandAdaptor = AwesomeAddOpOperandAdaptor;
   static StringRef getOperationName() { return "lean.return"; };
   static ParseResult parse(OpAsmParser &parser, OperationState &result);
+  Type getOperandType() { getOperand().getType(); }
   // void print(OpAsmPrinter &p);
   // LogicalResult verify();
 
