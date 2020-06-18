@@ -189,10 +189,6 @@ int main(int argc, char **argv) {
   outs() << "dumping module:\n";
   module->dump();
 
-  std::unique_ptr<llvm::Module> llvmModule = mlir::translateModuleToLLVMIR(*module);
-  if (!llvmModule) {
-    assert(false && "unable to translate module to MLIR");
-  }
 
   mlir::ConversionTarget target(context);
   target.addLegalDialect<mlir::LLVM::LLVMDialect>();
@@ -202,10 +198,23 @@ int main(int argc, char **argv) {
   std::string errorMessage;
   auto output = openOutputFile(outputFilename, &errorMessage);
   if (!output) {
-    llvm::errs() << errorMessage << "\n";
+    llvm::errs() << "UNABLE TO OPEN OUTPUT FILE: " << errorMessage << "\n";
     exit(1);
 
   }
+
+  mlir::PassManager pm(&context);
+  // mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
+  pm.addPass(mlir::lean::createLowerToLLVMPass());
+  
+  if (mlir::failed(pm.run(*module))) {
+    errs() << "\nunable to lower module\n "; return 4;
+  } else {
+    errs() << "\nsuccessfully lowered module:\n";
+  }
+
+  module->dump();
+
 
 
 

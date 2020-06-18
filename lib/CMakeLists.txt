@@ -9,6 +9,7 @@ set(LIBS
 
 add_llvm_library(MLIRLean
   LeanDialect.cpp
+  # LowerToLLVM.cpp
   # LeanOps.cpp
   # LeanTypes.cpp
 
