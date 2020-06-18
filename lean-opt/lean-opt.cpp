@@ -60,7 +60,7 @@ using namespace mlir;
 static cl::opt<std::string>
     inputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
 
-static cl::opt<std::string> outputFilename("o", cl::desc("XXXXOutput filenameXXXXX"),
+static cl::opt<std::string> outputFilename("outll", cl::desc("XXXXOutput filenameXXXXX"),
                                            cl::value_desc("filename"),
                                            cl::init("-"));
 
@@ -189,13 +189,27 @@ int main(int argc, char **argv) {
   outs() << "dumping module:\n";
   module->dump();
 
-  /*
+  std::unique_ptr<llvm::Module> llvmModule = mlir::translateModuleToLLVMIR(*module);
+  if (!llvmModule) {
+    assert(false && "unable to translate module to MLIR");
+  }
+
+  mlir::ConversionTarget target(context);
+  target.addLegalDialect<mlir::LLVM::LLVMDialect>();
+  target.addLegalOp<mlir::ModuleOp, mlir::ModuleTerminatorOp>();
+  LLVMTypeConverter typeConverter(&context);
+
+  std::string errorMessage;
   auto output = openOutputFile(outputFilename, &errorMessage);
   if (!output) {
     llvm::errs() << errorMessage << "\n";
     exit(1);
+
   }
 
+
+
+  /*
   errs() << "writing output to: |" << outputFilename << "|\n";
 
   errs () << "file...:vvvvv\n" << file->getBuffer() << "^^^^^\n";

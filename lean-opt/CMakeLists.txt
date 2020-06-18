@@ -68,6 +68,8 @@ set(LIBS
   LLVMSupport
   LLVMCore
   LLVMAsmParser
+  MLIRTargetLLVMIR
+  MLIRTargetLLVMIRModuleTranslation
 
   MLIRLean
 )
