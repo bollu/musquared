@@ -66,7 +66,9 @@ def PrintUnboxedIntOp : Lean_Op<"printUnboxedInt"> {
   let arguments = (ins I64:$input);
   let results = (outs Lean_IOType:$result);
 
-  let verifier = [{ ::verify$cppClass(this); }];
+  // let verifier = [{ ::verify$cppClass(this); }];
+  let parser = [{ return ::parse$cppClass(parser, result); }];
+  let printer = [{ ::print$cppClass(this, p); }];
 }
 
 

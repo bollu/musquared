@@ -186,7 +186,12 @@ public:
 
 mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
                                       mlir::OperationState &result);
+mlir::ParseResult parsePrintUnboxedIntOp(mlir::OpAsmParser &parser,
+                                      mlir::OperationState &result);
+
+
 void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p);
+void printPrintUnboxedIntOp(PrintUnboxedIntOp *op, mlir::OpAsmPrinter &p);
 
 LogicalResult verifyPrintUnboxedIntOp(PrintUnboxedIntOp *op);
 

@@ -520,6 +520,26 @@ void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p) {
 }
 
 
+void printPrintUnboxedIntOp(PrintUnboxedIntOp *op, mlir::OpAsmPrinter &p) {
+  p << "lean.printUnboxedInt (" << op->input() << ")";
+}
+
+
+mlir::ParseResult parsePrintUnboxedIntOp(mlir::OpAsmParser &parser,
+                                      mlir::OperationState &result) {
+  mlir::OpAsmParser::OperandType input;
+  SmallVector<Value, 1> vs;
+  if (parser.parseLParen() ||
+      parser.parseOperand(input) ||
+      parser.parseRParen() ||
+      parser.resolveOperand(input, parser.getBuilder().getIntegerType(64), vs))
+    return mlir::failure();
+  
+  result.addTypes({IOType::get(parser.getBuilder().getNoneType())});
+  result.addOperands(vs);
+  return success();
+
+}
 
 } // end namespace lean
 } // end namespace mlir
