@@ -1,5 +1,6 @@
 module {
   // func @print_int(%arg: i32): !lean.IO<none>;  
+
   func @multiply_transpose(
                  %arg0: !lean.struct<tensor<*xf64>, tensor<*xf64>>, 
   						   %arg1: !lean.simple,
@@ -19,6 +20,9 @@ module {
     %print_boxx = lean.case(%x : i64, i64, [%arg] {
       %a = constant 20 : i64
       lean.return %arg : i64
+    }, [%arg4] {
+      %a = constant 30 : i64
+      lean.return %arg4 : i64
     }) // , i64)
     // lean.case(%box  i64) 
     // lean.print_unboxed_int %x : i32 loc("example/file/path":1:1)

@@ -426,13 +426,11 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
     
     // can I validate here? worth a shot.
    
-
-
     llvm::outs() << __LINE__ << "\n";
     
     // parser.parseRegion(*r, regionArgs, {scrutineeTy});
     parser.parseRegion(*r, regionArgs, {scrutineeTy});
-    
+    llvm::outs() << __LINE__ << "\n";
     llvm::outs() << __LINE__ << "\n";
     for(Block &BB : r->getBlocks()) {
       llvm::outs() << __LINE__ << "\n";
