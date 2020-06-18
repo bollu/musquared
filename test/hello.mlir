@@ -1,8 +1,8 @@
 module {
-  func @main() {
+  func @main() -> !lean.IO<none> {
     %x = constant 10 : i64
     %z = lean.printUnboxedInt(%x)         
-    return 
+    return %z : !lean.IO<none>
   }
 
   
