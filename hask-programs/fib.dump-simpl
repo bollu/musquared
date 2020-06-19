@@ -1,0 +1,64 @@
+
+==================== Tidy Core ====================
+2020-06-19 11:16:18.08660177 UTC
+
+Result size of Tidy Core
+  = {terms: 48, types: 19, coercions: 0, joins: 0/0}
+
+-- RHS size: {terms: 1, types: 0, coercions: 0, joins: 0/0}
+$trModule1_r2II :: GHC.Prim.Addr#
+[GblId, Caf=NoCafRefs, Unf=OtherCon []]
+$trModule1_r2II = "main"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0, joins: 0/0}
+$trModule2_r2J4 :: GHC.Types.TrName
+[GblId, Caf=NoCafRefs, Unf=OtherCon []]
+$trModule2_r2J4 = GHC.Types.TrNameS $trModule1_r2II
+
+-- RHS size: {terms: 1, types: 0, coercions: 0, joins: 0/0}
+$trModule3_r2J5 :: GHC.Prim.Addr#
+[GblId, Caf=NoCafRefs, Unf=OtherCon []]
+$trModule3_r2J5 = "Main"#
+
+-- RHS size: {terms: 2, types: 0, coercions: 0, joins: 0/0}
+$trModule4_r2J6 :: GHC.Types.TrName
+[GblId, Caf=NoCafRefs, Unf=OtherCon []]
+$trModule4_r2J6 = GHC.Types.TrNameS $trModule3_r2J5
+
+-- RHS size: {terms: 3, types: 0, coercions: 0, joins: 0/0}
+Main.$trModule :: GHC.Types.Module
+[GblId, Caf=NoCafRefs, Unf=OtherCon []]
+Main.$trModule = GHC.Types.Module $trModule2_r2J4 $trModule4_r2J6
+
+Rec {
+-- RHS size: {terms: 23, types: 6, coercions: 0, joins: 0/0}
+fib_rpY :: Int -> Int
+[GblId, Arity=1, Unf=OtherCon []]
+fib_rpY
+  = \ (i_aVG :: Int) ->
+      case i_aVG of wild_Xb { GHC.Types.I# ds_d2IO ->
+      case ds_d2IO of {
+        __DEFAULT ->
+          + @ Int
+            GHC.Num.$fNumInt
+            (fib_rpY wild_Xb)
+            (fib_rpY (- @ Int GHC.Num.$fNumInt wild_Xb (GHC.Types.I# 1#)));
+        0# -> GHC.Types.I# 0#;
+        1# -> GHC.Types.I# 1#
+      }
+      }
+end Rec }
+
+-- RHS size: {terms: 6, types: 1, coercions: 0, joins: 0/0}
+main :: IO ()
+[GblId]
+main
+  = putStrLn
+      (show @ Int GHC.Show.$fShowInt (fib_rpY (GHC.Types.I# 10#)))
+
+-- RHS size: {terms: 2, types: 1, coercions: 0, joins: 0/0}
+:Main.main :: IO ()
+[GblId]
+:Main.main = GHC.TopHandler.runMainIO @ () main
+
+
