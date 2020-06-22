@@ -26,7 +26,7 @@ source-repository head
   location: https://github.com/bgamari/ghc-dump
 
 library
-  exposed-modules:     GhcDump.Repl, GhcDump.Util, GhcDump.Pretty, GhcDump.Reconstruct
+  exposed-modules:     GhcDump.Repl, GhcDump.Util, GhcDump.Pretty, GhcDump.Reconstruct, GhcDump.Mlir
   hs-source-dirs:      src
   build-depends:       base < 5.0,
                        ghc-dump-core >=0.1 && <0.2,
