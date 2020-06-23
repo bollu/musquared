@@ -14,7 +14,7 @@ import Text.Regex.TDFA
 import Text.Regex.TDFA.Common (Regex)
 import Text.Regex.TDFA.Text ()
 
-import GhcDump.Pretty
+import GhcDump.Mlir as M
 import GhcDump.Util
 import GhcDump.Ast
 
@@ -52,7 +52,8 @@ filterBindings re m =
 
 modes :: Parser (IO ())
 modes = subparser
-    $ mode "show" showMode (progDesc "print Core")
+     -- $ mode "show" showMode (progDesc "print Core")
+    $ mode "show" showMlirMode (progDesc "print Core in mlir-opt consumable format [consumable by MLIR]")
     <> mode "list-bindings" listBindingsMode (progDesc "list top-level bindings, their sizes, and types")
     <> mode "summarize" summarizeMode (progDesc "summarize multiple dump files")
   where
@@ -77,13 +78,21 @@ modes = subparser
           <*> switch (short 'T' <> long "show-let-types" <> help "Show type signatures for let-bound binders")
           <*> switch (short 'U' <> long "show-unfoldings" <> help "Show unfolding templates")
 
-    showMode =
-        run <$> filterCond <*> prettyOpts <*> dumpFile
-      where
-        run filterFn opts fname = do
-            dump <- filterFn <$> GhcDump.Util.readDump fname
-            print $ pprModule opts dump
+    -- showMode =
+    --     run <$> filterCond <*> prettyOpts <*> dumpFile
+    --   where
+    --     run filterFn opts fname = do
+    --         dump <- filterFn <$> GhcDump.Util.readDump fname
+    --         print $ pprModule opts dump
 
+    showMlirMode = 
+        run <$> dumpFile
+      where
+        run fname = do
+           dump <- GhcDump.Util.readDump fname
+           print $ pprModule defaultPrettyOpts dump
+           print "MLIR DONE"
+      
 
     listBindingsMode =
         run <$> filterCond <*> sortField <*> prettyOpts <*> dumpFile
