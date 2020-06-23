@@ -1,4 +1,4 @@
-module {
+module @lean_mod {
   // func @print_int(%arg: i32): !lean.IO<none>;  
 
   func @multiply_transpose(
