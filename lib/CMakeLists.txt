@@ -1,5 +1,4 @@
 set(LIBS
-  
   MLIREDSC
   MLIRIR
   MLIRStandardOps
