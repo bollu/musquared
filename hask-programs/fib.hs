@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 fib :: Int -> Int
 fib i = case i of
           0 -> 0

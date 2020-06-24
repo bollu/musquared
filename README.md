@@ -17,7 +17,9 @@
 
 ### GHC Core
 
-- [`CoreSyn`](https://downloads.haskell.org/~ghc/8.8.3/docs/html/libraries/ghc-8.8.3/CoreSyn.html)
+- [`CoreSyn` data type in GHC](https://downloads.haskell.org/~ghc/8.8.3/docs/html/libraries/ghc-8.8.3/CoreSyn.html)
+- [`CoreSyn` wiki commentary](https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/compiler/core-syn-type)
+- [Stephen Diehl on targetting Core](https://www.stephendiehl.com/posts/ghc_03.html)
 
 ```hs
 data Expr b
@@ -32,6 +34,14 @@ data Expr b
   | Type  Type
   | Coercion Coercion
   deriving Data
+
+type Arg b = Expr b
+type Alt b = (AltCon, [b], Expr b)
+
+data AltCon = DataAlt DataCon | LitAlt  Literal | DEFAULT
+
+data Bind b = NonRec b (Expr b) | Rec [(b, (Expr b))]
+
 ```
 
 ### `hask-programs/`
