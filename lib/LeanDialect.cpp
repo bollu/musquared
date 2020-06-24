@@ -7,7 +7,7 @@
 #include "mlir/IR/Types.h"
 #include "mlir/Support/LLVM.h"
 #include "mlir/Support/LogicalResult.h"
-#include "mlir/Support/STLExtras.h"
+// #include "mlir/Support/STLExtras.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -307,7 +307,7 @@ void LeanDialect::printType(mlir::Type type,
   if(StructType structType = type.dyn_cast<StructType>()) {
     // Print the struct type according to the parser format.
     printer << "struct<";
-    mlir::interleaveComma(structType.getElementTypes(), printer);
+    // mlir::interleaveComma(structType.getElementTypes(), printer);
     printer << '>';
   } else if(SimpleType simpleType = type.dyn_cast<SimpleType>()) {
     printer << "simple";
@@ -556,7 +556,7 @@ mlir::ParseResult parsePrintUnboxedIntOp(mlir::OpAsmParser &parser,
 
 // REWRITING
 
-
+/*
 namespace {
 /// Lowers `toy.print` to a loop nest calling `printf` on each of the individual
 /// elements of the array.
@@ -633,7 +633,7 @@ private:
     auto llvmI32Ty = LLVM::LLVMType::getInt32Ty(llvmDialect);
     auto llvmI8PtrTy = LLVM::LLVMType::getInt8PtrTy(llvmDialect);
     auto llvmFnType = LLVM::LLVMType::getFunctionTy(llvmI32Ty, llvmI8PtrTy,
-                                                    /*isVarArg=*/true);
+                                                    //isVarArg=true);
 
     // Insert the printf function into the body of the parent module.
     PatternRewriter::InsertionGuard insertGuard(rewriter);
@@ -655,7 +655,7 @@ private:
       builder.setInsertionPointToStart(module.getBody());
       auto type = LLVM::LLVMType::getArrayTy(
           LLVM::LLVMType::getInt8Ty(llvmDialect), value.size());
-      global = builder.create<LLVM::GlobalOp>(loc, type, /*isConstant=*/true,
+      global = builder.create<LLVM::GlobalOp>(loc, type, //isConstant=true,
                                               LLVM::Linkage::Internal, name,
                                               builder.getStringAttr(value));
     }
@@ -722,10 +722,10 @@ void LeanToLLVMLoweringPass::runOnModule() {
 
 /// Create a pass for lowering operations the remaining `Toy` operations, as
 /// well as `Affine` and `Std`, to the LLVM dialect for codegen.
-std::unique_ptr<mlir::Pass> createLowerToLLVMPass() {
-  return std::make_unique<LeanToLLVMLoweringPass>();
-}
-
+// std::unique_ptr<mlir::Pass> createLowerToLLVMPass() {
+//   return std::make_unique<LeanToLLVMLoweringPass>();
+// }
+*/
 
 } // end namespace lean
 } // end namespace mlir

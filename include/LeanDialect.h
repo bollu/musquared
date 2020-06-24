@@ -1,7 +1,10 @@
 #ifndef MLIR_DIALECT_LEAN_LEANDIALECT_H
 #define MLIR_DIALECT_LEAN_LEANDIALECT_H
 
-// #include "mlir/IR/Dialect.h"
+#include "mlir/IR/Dialect.h"
+#include "mlir/IR/OpDefinition.h"
+#include "mlir/Interfaces/SideEffectInterfaces.h"
+
 // #include "mlir/IR/Function.h"
 // #include "mlir/IR/StandardTypes.h"
 // #include "mlir/Pass/Pass.h"
@@ -9,7 +12,7 @@
 namespace mlir {
 namespace lean {
 
-class LeanDialect : public Dialect {
+class LeanDialect : public ::mlir::Dialect {
 public:
   explicit LeanDialect(MLIRContext *context);
 
@@ -196,7 +199,7 @@ void printPrintUnboxedIntOp(PrintUnboxedIntOp *op, mlir::OpAsmPrinter &p);
 
 LogicalResult verifyPrintUnboxedIntOp(PrintUnboxedIntOp *op);
 
-std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
+// std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
 
 } // end namespace lean
 } // end namespace mlir

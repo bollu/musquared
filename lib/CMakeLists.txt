@@ -4,7 +4,6 @@ add_mlir_dialect_library(MLIRLean
         ${PROJECT_SOURCE_DIR}/include/
         DEPENDS
         MLIRLeanOpsIncGen
-
 	LINK_LIBS PUBLIC
 	MLIRIR
 	)
