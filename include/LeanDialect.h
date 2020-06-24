@@ -1,10 +1,10 @@
 #ifndef MLIR_DIALECT_LEAN_LEANDIALECT_H
 #define MLIR_DIALECT_LEAN_LEANDIALECT_H
 
-#include "mlir/IR/Dialect.h"
-#include "mlir/IR/Function.h"
-#include "mlir/IR/StandardTypes.h"
-#include "mlir/Pass/Pass.h"
+// #include "mlir/IR/Dialect.h"
+// #include "mlir/IR/Function.h"
+// #include "mlir/IR/StandardTypes.h"
+// #include "mlir/Pass/Pass.h"
 
 namespace mlir {
 namespace lean {

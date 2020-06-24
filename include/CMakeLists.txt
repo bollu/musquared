@@ -1,1 +1,1 @@
-add_mlir_dialect(LeanOps LeanOps)
+add_mlir_dialect(LeanOps lean)
