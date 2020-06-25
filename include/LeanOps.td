@@ -5,6 +5,19 @@
 
 include "mlir/Interfaces/SideEffects.td"
 include "mlir/Interfaces/CallInterfaces.td"
+include "mlir/IR/RegionKindInterface.td"
+
+include "mlir/Dialect/Affine/IR/AffineOpsBase.td"
+include "mlir/IR/OpBase.td"
+include "mlir/IR/OpAsmInterface.td"
+// include "mlir/IR/RegionKindInterface.td"
+include "mlir/IR/SymbolInterfaces.td"
+// include "mlir/Interfaces/CallInterfaces.td"
+include "mlir/Interfaces/ControlFlowInterfaces.td"
+include "mlir/Interfaces/InferTypeOpInterface.td"
+include "mlir/Interfaces/SideEffectInterfaces.td"
+
+
 
 //===----------------------------------------------------------------------===//
 // Lean dialect definition
@@ -136,4 +149,17 @@ def PrintUnboxedIntOp : Lean_Op<"print_unboxed_int"> {
   let assemblyFormat = "$input attr-dict `:` type($input)";
 }
 */
+
+def HasDominanceScopeOp : Lean_Op<"has_dominance_scope",  [
+    DeclareOpInterfaceMethods<RegionKindInterface>]> {
+  let summary =  "has dominance scope operation";
+  let description = [{
+    Test op that defines a new scope with dominance scope.
+  }];
+
+  let regions = (region VariadicRegion<AnyRegion>:$regions);
+  let results = (outs Variadic<AnyType>);
+}
+
+
 #endif // LEAN_OPS

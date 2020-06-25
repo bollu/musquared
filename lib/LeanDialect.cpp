@@ -31,6 +31,13 @@
 #include "mlir/Conversion/SCFToStandard/SCFToStandard.h"
 
 
+#include "mlir/IR/Function.h"
+#include "mlir/IR/PatternMatch.h"
+#include "mlir/IR/TypeUtilities.h"
+#include "mlir/Transforms/FoldUtils.h"
+#include "mlir/Transforms/InliningUtils.h"
+#include "llvm/ADT/StringSwitch.h"
+
 using namespace mlir;
 using namespace mlir::lean;
 
@@ -446,12 +453,12 @@ ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
     llvm::outs() << __LINE__ << "\n";
     SmallVector<mlir::OpAsmParser::OperandType, 4> regionArgs;
     parser.parseRegionArgumentList(regionArgs, mlir::OpAsmParser::Delimiter::OptionalSquare);
+
     llvm::outs() << __LINE__ << "\n";
     llvm::outs() << "\t- #region args:" << regionArgs.size() << "\n";
     if (regionArgs.size()) llvm::outs() << "\t-region arg[0]:  " << regionArgs[0].name << "\n";
     llvm::outs() << __LINE__ << "\n";
     Region *r = result.addRegion();
-    
     // can I validate here? worth a shot.
    
     llvm::outs() << __LINE__ << "\n";
@@ -856,6 +863,9 @@ std::unique_ptr<mlir::Pass> createLowerPrintPass() {
   return std::make_unique<LowerPrintPass>();
 }
 
+RegionKind HasDominanceScopeOp::getRegionKind(unsigned index) {
+  return RegionKind::SSACFG;
+}
 
 
 } // end namespace lean
