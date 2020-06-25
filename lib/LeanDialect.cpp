@@ -573,7 +573,7 @@ mlir::ParseResult parsePrintUnboxedIntOp(mlir::OpAsmParser &parser,
 
 
 void GetIOTokenOp::build(OpBuilder &b, OperationState &state) {
-  return GetIOTokenOp::build(b, state, b.getNoneType());
+  return GetIOTokenOp::build(b, state, IOType::get(b.getNoneType()));
 };
 
 
@@ -588,6 +588,16 @@ public:
   LogicalResult
   matchAndRewrite(Operation *op, ArrayRef<Value> operands,
                   ConversionPatternRewriter &rewriter) const override {
+    {
+      llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\nvvvvv";
+      llvm::errs() << *op->getParentOp() << "\n";
+      llvm::errs() << "^^^^^\n";
+      GetIOTokenOp iotok = rewriter.create<GetIOTokenOp>(op->getLoc());
+      rewriter.replaceOp(op, iotok.getResult());
+      return success();
+
+    }
+
     
 
     llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
@@ -661,7 +671,7 @@ public:
     llvm::errs() << "call :"  << call << "\n";
     // rewriter.replaceOp(op, {call});
     // Notify the rewriter that this operation has been removed.
-    // rewriter.eraseOp(op);
+    
     GetIOTokenOp iotok = rewriter.create<GetIOTokenOp>(loc);
     // lmao, the fact that I need a cast<Value>(...) here is
     // definitely WTF++ for me. You get punished for not using auto
@@ -821,8 +831,9 @@ void LowerPrintPass::runOnFunction() {
   // if any of these operations are *not* converted. Given that we actually want
   // a partial lowering, we explicitly mark the Toy operations that don't want
   // to lower, `toy.print`, as `legal`.
-  target.addIllegalDialect<LeanDialect>();
+  // target.addIllegalDialect<LeanDialect>();
   // target.addLegalOp<PrintUnboxedIntOp>();
+  target.addIllegalOp<PrintUnboxedIntOp>();
 
   // Now that the conversion target has been defined, we just need to provide
   // the set of patterns that will lower the Toy operations.
@@ -832,8 +843,13 @@ void LowerPrintPass::runOnFunction() {
   // With the target and rewrite patterns defined, we can now attempt the
   // conversion. The conversion will signal failure if any of our `illegal`
   // operations were not converted successfully.
-  if (failed(applyPartialConversion(getFunction(), target, patterns)))
+  if (failed(applyPartialConversion(getFunction(), target, patterns))) {
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+    llvm::errs() << "fn\nvvvv\n";
+    getFunction().dump() ;
+    llvm::errs() << "\n^^^^^\n";
     signalPassFailure();
+  }
 }
 
 std::unique_ptr<mlir::Pass> createLowerPrintPass() {
