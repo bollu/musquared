@@ -5,6 +5,7 @@ set(LIBS
         ${conversion_libs}
         MLIROptLib
         MLIRLean
+        MLIRTargetLLVMIR
         )
 add_llvm_executable(lean-opt lean-opt.cpp)
 

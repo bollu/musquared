@@ -572,25 +572,43 @@ public:
   LogicalResult
   matchAndRewrite(Operation *op, ArrayRef<Value> operands,
                   ConversionPatternRewriter &rewriter) const override {
-    auto memRefType = (*op->operand_type_begin()).cast<MemRefType>();
-    auto memRefShape = memRefType.getShape();
+    
+
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+    // assert(false && "died in rewrite");
+    // return success();
+    // (*op->operand_begin()).cast<mlir::Float
+    // IntegerType i = (*op->operand_begin()).cast<mlir::IntegerType>();
+    
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+
+    // auto memRefType = (*op->operand_type_begin()).cast<>();
+    // auto memRefShape = memRefType.getShape();
     auto loc = op->getLoc();
     auto *llvmDialect =
         op->getContext()->getRegisteredDialect<LLVM::LLVMDialect>();
     assert(llvmDialect && "expected llvm dialect to be registered");
 
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+
     ModuleOp parentModule = op->getParentOfType<ModuleOp>();
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+
 
     // Get a symbol reference to the printf function, inserting it if necessary.
     auto printfRef = getOrInsertPrintf(rewriter, parentModule, llvmDialect);
     Value formatSpecifierCst = getOrCreateGlobalString(
-        loc, rewriter, "frmt_spec", StringRef("%f \0", 4), parentModule,
+        loc, rewriter, "frmt_spec", StringRef("%d \0", 4), parentModule,
         llvmDialect);
     Value newLineCst = getOrCreateGlobalString(
         loc, rewriter, "nl", StringRef("\n\0", 2), parentModule, llvmDialect);
 
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+
     // Create a loop for each of the dimensions within the shape.
+    /*
     SmallVector<Value, 4> loopIvs;
+    
     for (unsigned i = 0, e = memRefShape.size(); i != e; ++i) {
       auto lowerBound = rewriter.create<ConstantIndexOp>(loc, 0);
       auto upperBound = rewriter.create<ConstantIndexOp>(loc, memRefShape[i]);
@@ -611,15 +629,24 @@ public:
       rewriter.create<scf::YieldOp>(loc);
       rewriter.setInsertionPointToStart(loop.getBody());
     }
-
-    // Generate a call to printf for the current element of the loop.
+    */
     auto printOp = cast<lean::PrintUnboxedIntOp>(op);
-    auto elementLoad = rewriter.create<LoadOp>(loc, printOp.input(), loopIvs);
-    rewriter.create<CallOp>(loc, printfRef, rewriter.getIntegerType(32),
-                            ArrayRef<Value>({formatSpecifierCst, elementLoad}));
 
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+    Value input = printOp.input();
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+    
+    // Generate a call to printf for the current element of the loop.
+    // auto elementLoad = rewriter.create<LoadOp>(loc, printOp.input(), loopIvs);
+    CallOp call = rewriter.create<CallOp>(loc, printfRef, rewriter.getIntegerType(32),
+                            ArrayRef<Value>({formatSpecifierCst, input }));
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+    llvm::errs() << "loc: " << loc << " | op: " << *op << " | input: " << input << "\n";
+    llvm::errs() << "call :"  << call << "\n";
     // Notify the rewriter that this operation has been removed.
     rewriter.eraseOp(op);
+    llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
+    
     return success();
   }
 
@@ -679,15 +706,15 @@ private:
 
 
 
-/*
 namespace {
-struct LeanToLLVMLoweringPass : public ModulePass<LeanToLLVMLoweringPass> {
-  void runOnModule() final;
+struct LeanToLLVMLoweringPass
+    : public PassWrapper<LeanToLLVMLoweringPass, OperationPass<ModuleOp>> {
+  void runOnOperation() final;
 };
 } // end anonymous namespace
 
-void LeanToLLVMLoweringPass::runOnModule() {
-  // assert(false);
+void LeanToLLVMLoweringPass::runOnOperation() {
+  
   // The first thing to define is the conversion target. This will define the
   // final target for this lowering. For this lowering, we are only targeting
   // the LLVM dialect.
@@ -695,7 +722,7 @@ void LeanToLLVMLoweringPass::runOnModule() {
   target.addLegalOp<ModuleOp, ModuleTerminatorOp>();
 
   // During this lowering, we will also be lowering the MemRef types, that are
-  // currently being operated on, to a representation in LLVM. Do perform this
+  // currently being operated on, to a representation in LLVM. To perform this
   // conversion we use a TypeConverter as part of the lowering. This converter
   // details how one type maps to another. This is necessary now that we will be
   // doing more complicated lowerings, involving loop region arguments.
@@ -712,26 +739,28 @@ void LeanToLLVMLoweringPass::runOnModule() {
   OwningRewritePatternList patterns;
   // populateAffineToStdConversionPatterns(patterns, &getContext());
   // populateLoopToStdConversionPatterns(patterns, &getContext());
-  populateStdToLLVMConversionPatterns(typeConverter, patterns);
+  // populateStdToLLVMConversionPatterns(typeConverter, patterns);
 
   // The only remaining operation to lower from the `toy` dialect, is the
   // PrintOp.
-  // patterns.insert<PrintOpLowering>(&getContext());
-  // assert(false && "lowering!");
+  patterns.insert<PrintOpLowering>(&getContext());
 
   // We want to completely lower to LLVM, so we use a `FullConversion`. This
   // ensures that only legal operations will remain after the conversion.
-  auto module = getModule();
-  if (failed(applyFullConversion(module, target, patterns, &typeConverter)))
-    signalPassFailure();
+  
+  auto module = getOperation();
+  // if (failed(applyFullConversion(module, target, patterns)))
+  //   signalPassFailure();
+
+  applyPartialConversion(module, target, patterns);
 }
 
 /// Create a pass for lowering operations the remaining `Toy` operations, as
 /// well as `Affine` and `Std`, to the LLVM dialect for codegen.
-// std::unique_ptr<mlir::Pass> createLowerToLLVMPass() {
-//   return std::make_unique<LeanToLLVMLoweringPass>();
-// }
-*/
+std::unique_ptr<mlir::Pass> createLowerToLLVMPass() {
+  return std::make_unique<LeanToLLVMLoweringPass>();
+}
+
 
 } // end namespace lean
 } // end namespace mlir

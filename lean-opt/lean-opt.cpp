@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 
   mlir::PassManager pm(&context);
   // mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
-  //pm.addPass(std::make_unique<LeanToLLVMLoweringPass>());
+  pm.addPass(mlir::lean::createLowerToLLVMPass());
   
   if (mlir::failed(pm.run(*module))) {
     errs() << "\nunable to lower module\n "; return 4;
@@ -215,6 +215,12 @@ int main(int argc, char **argv) {
 
   module->dump();
 
+  // what in the everloving fuck does this mean?
+  auto llvmModule = mlir::translateModuleToLLVMIR(*module);
+  if (!llvmModule) {
+    llvm::errs() << "\nFailed to emit LLVM IR\n";
+    return -1;
+  }
 
 
 

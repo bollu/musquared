@@ -7,7 +7,7 @@
 
 // #include "mlir/IR/Function.h"
 // #include "mlir/IR/StandardTypes.h"
-// #include "mlir/Pass/Pass.h"
+#include "mlir/Pass/Pass.h"
 
 namespace mlir {
 namespace lean {
@@ -199,7 +199,7 @@ void printPrintUnboxedIntOp(PrintUnboxedIntOp *op, mlir::OpAsmPrinter &p);
 
 LogicalResult verifyPrintUnboxedIntOp(PrintUnboxedIntOp *op);
 
-// std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
+std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
 
 } // end namespace lean
 } // end namespace mlir
