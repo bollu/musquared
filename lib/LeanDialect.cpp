@@ -1,16 +1,16 @@
 #include "LeanDialect.h"
 #include "LeanOps.h"
-#include "mlir/IR/Attributes.h"
-#include "mlir/IR/Builders.h"
+// #include "mlir/IR/Attributes.h"
+// #include "mlir/IR/Builders.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "mlir/IR/Module.h"
 #include "mlir/IR/Types.h"
 #include "mlir/Support/LLVM.h"
 #include "mlir/Support/LogicalResult.h"
 // #include "mlir/Support/STLExtras.h"
-#include "llvm/ADT/None.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/ErrorHandling.h"
+// #include "llvm/ADT/None.h"
+// #include "llvm/ADT/StringRef.h"
+// #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 // #include <bits/stdint-intn.h>
 #include <cstddef>
@@ -27,7 +27,6 @@
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "llvm/ADT/Sequence.h"
-
 
 using namespace mlir;
 using namespace mlir::lean;

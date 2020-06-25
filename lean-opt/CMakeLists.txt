@@ -6,10 +6,10 @@ set(LIBS
         MLIROptLib
         MLIRLean
         )
-add_llvm_executable(standalone-opt standalone-opt.cpp)
+add_llvm_executable(lean-opt lean-opt.cpp)
 
-llvm_update_compile_flags(standalone-opt)
-target_link_libraries(standalone-opt PRIVATE ${LIBS})
+llvm_update_compile_flags(lean-opt)
+target_link_libraries(lean-opt PRIVATE ${LIBS})
 
 
 # set(LLVM_OPTIONAL_SOURCES

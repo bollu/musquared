@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 
   mlir::PassManager pm(&context);
   // mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
-  pm.addPass(mlir::lean::createLowerToLLVMPass());
+  //pm.addPass(std::make_unique<LeanToLLVMLoweringPass>());
   
   if (mlir::failed(pm.run(*module))) {
     errs() << "\nunable to lower module\n "; return 4;
