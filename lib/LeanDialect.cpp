@@ -1,7 +1,7 @@
 #include "LeanDialect.h"
 #include "LeanOps.h"
-// #include "mlir/IR/Attributes.h"
-// #include "mlir/IR/Builders.h"
+#include "mlir/IR/Attributes.h"
+#include "mlir/IR/Builders.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "mlir/IR/Module.h"
 #include "mlir/IR/Types.h"
@@ -27,6 +27,9 @@
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "llvm/ADT/Sequence.h"
+#include "mlir/Dialect/SCF/SCF.h"
+#include "mlir/Conversion/SCFToStandard/SCFToStandard.h"
+
 
 using namespace mlir;
 using namespace mlir::lean;
@@ -555,7 +558,9 @@ mlir::ParseResult parsePrintUnboxedIntOp(mlir::OpAsmParser &parser,
 
 // REWRITING
 
-/*
+
+
+
 namespace {
 /// Lowers `toy.print` to a loop nest calling `printf` on each of the individual
 /// elements of the array.
@@ -564,7 +569,7 @@ public:
   explicit PrintOpLowering(MLIRContext *context)
       : ConversionPattern(lean::PrintUnboxedIntOp::getOperationName(), 1, context) {}
 
-  PatternMatchResult
+  LogicalResult
   matchAndRewrite(Operation *op, ArrayRef<Value> operands,
                   ConversionPatternRewriter &rewriter) const override {
     auto memRefType = (*op->operand_type_begin()).cast<MemRefType>();
@@ -591,18 +596,19 @@ public:
       auto upperBound = rewriter.create<ConstantIndexOp>(loc, memRefShape[i]);
       auto step = rewriter.create<ConstantIndexOp>(loc, 1);
       auto loop =
-          rewriter.create<loop::ForOp>(loc, lowerBound, upperBound, step);
-      loop.getBody()->clear();
+          rewriter.create<scf::ForOp>(loc, lowerBound, upperBound, step);
+      for (Operation &nested : *loop.getBody())
+        rewriter.eraseOp(&nested);
       loopIvs.push_back(loop.getInductionVar());
 
       // Terminate the loop body.
-      rewriter.setInsertionPointToStart(loop.getBody());
+      rewriter.setInsertionPointToEnd(loop.getBody());
 
       // Insert a newline after each of the inner dimensions of the shape.
       if (i != e - 1)
         rewriter.create<CallOp>(loc, printfRef, rewriter.getIntegerType(32),
                                 newLineCst);
-      rewriter.create<loop::YieldOp>(loc);
+      rewriter.create<scf::YieldOp>(loc);
       rewriter.setInsertionPointToStart(loop.getBody());
     }
 
@@ -614,7 +620,7 @@ public:
 
     // Notify the rewriter that this operation has been removed.
     rewriter.eraseOp(op);
-    return matchSuccess();
+    return success();
   }
 
 private:
@@ -632,7 +638,7 @@ private:
     auto llvmI32Ty = LLVM::LLVMType::getInt32Ty(llvmDialect);
     auto llvmI8PtrTy = LLVM::LLVMType::getInt8PtrTy(llvmDialect);
     auto llvmFnType = LLVM::LLVMType::getFunctionTy(llvmI32Ty, llvmI8PtrTy,
-                                                    //isVarArg=true);
+                                                    /*isVarArg=*/true);
 
     // Insert the printf function into the body of the parent module.
     PatternRewriter::InsertionGuard insertGuard(rewriter);
@@ -654,7 +660,7 @@ private:
       builder.setInsertionPointToStart(module.getBody());
       auto type = LLVM::LLVMType::getArrayTy(
           LLVM::LLVMType::getInt8Ty(llvmDialect), value.size());
-      global = builder.create<LLVM::GlobalOp>(loc, type, //isConstant=true,
+      global = builder.create<LLVM::GlobalOp>(loc, type, /*isConstant=*/true,
                                               LLVM::Linkage::Internal, name,
                                               builder.getStringAttr(value));
     }
@@ -673,6 +679,7 @@ private:
 
 
 
+/*
 namespace {
 struct LeanToLLVMLoweringPass : public ModulePass<LeanToLLVMLoweringPass> {
   void runOnModule() final;
