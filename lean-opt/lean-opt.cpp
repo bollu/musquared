@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 
   mlir::PassManager pm(&context);
   // mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
-  pm.addPass(mlir::lean::createLowerToLLVMPass());
+  pm.addPass(mlir::lean::createLowerPrintPass());
   
   if (mlir::failed(pm.run(*module))) {
     errs() << "\nunable to lower module\n "; return 4;
@@ -215,12 +215,19 @@ int main(int argc, char **argv) {
 
   module->dump();
 
+  errs() << "\n";
+  
+
   // what in the everloving fuck does this mean?
-  auto llvmModule = mlir::translateModuleToLLVMIR(*module);
-  if (!llvmModule) {
-    llvm::errs() << "\nFailed to emit LLVM IR\n";
-    return -1;
-  }
+  // I now see. This is to lower from mlir::LLVM into llvm-proper.
+  // clusterfuck_count++;
+  // Sure this will not lower because I have random !lean.IO<>.
+  // But worse, it doesn't even seem to be lowering the printf?
+  // std::unique_ptr<llvm::Module> llvmModule = mlir::translateModuleToLLVMIR(*module);
+  // if (!llvmModule) {
+  //   llvm::errs() << "\nFailed to emit LLVM IR\n";
+  //   return -1;
+  // }
 
 
 

@@ -95,6 +95,21 @@ def AwesomeAddOp : Lean_Op<"awesome_add"> {
 
 }
 
+def GetIOTokenOp : Lean_Op<"get_IO_Token"> {
+  let arguments = (ins );
+  let results = (outs Lean_IOType);
+
+  // custom parser. WART: was unable to find this in toy???
+  let parser = [{ return ::parse$cppClass(parser, result); }];
+  // WART, LMAO: WTF, the _variable names_ are hard-coded, so we need
+  // to name this `p`.
+  let printer = [{ ::print$cppClass(this, p); }];
+  let builders = [
+    OpBuilder<"OpBuilder &b, OperationState &state">
+  ];
+
+}
+
 def LeanTerminatorOp :
     Lean_Op<"terminator", [Terminator]> {
   let summary = "affine terminator operation";

@@ -188,18 +188,19 @@ public:
 #include "LeanOps.h.inc"
 #undef GET_OP_CLASSES
 
-mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
-                                      mlir::OperationState &result);
-mlir::ParseResult parsePrintUnboxedIntOp(mlir::OpAsmParser &parser,
-                                      mlir::OperationState &result);
+mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser, mlir::OperationState &result);
+mlir::ParseResult parsePrintUnboxedIntOp(mlir::OpAsmParser &parser, mlir::OperationState &result);
+mlir::ParseResult parseGetIOTokenOp(mlir::OpAsmParser &parser, mlir::OperationState &result);
 
 
 void printAwesomeAddOp(AwesomeAddOp *op, mlir::OpAsmPrinter &p);
 void printPrintUnboxedIntOp(PrintUnboxedIntOp *op, mlir::OpAsmPrinter &p);
+void printGetIOTokenOp(GetIOTokenOp *op, mlir::OpAsmPrinter &p);
 
 LogicalResult verifyPrintUnboxedIntOp(PrintUnboxedIntOp *op);
 
 std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
+std::unique_ptr<mlir::Pass> createLowerPrintPass();
 
 } // end namespace lean
 } // end namespace mlir

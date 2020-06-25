@@ -372,6 +372,19 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
 }
 
 
+mlir::ParseResult parseGetIOTokenOp(mlir::OpAsmParser &parser,
+                                      mlir::OperationState &result) {
+  result.addTypes({IOType::get(parser.getBuilder().getNoneType())});
+  return mlir::success();
+}
+
+void printGetIOTokenOp(GetIOTokenOp *op, mlir::OpAsmPrinter &p) {
+  p << "lean.get_IO_token";
+}
+
+
+
+
 // https://reviews.llvm.org/D72223
 ParseResult CaseOp::parse(mlir::OpAsmParser &parser, OperationState &result) {
 
@@ -559,6 +572,9 @@ mlir::ParseResult parsePrintUnboxedIntOp(mlir::OpAsmParser &parser,
 // REWRITING
 
 
+void GetIOTokenOp::build(OpBuilder &b, OperationState &state) {
+  return GetIOTokenOp::build(b, state, b.getNoneType());
+};
 
 
 namespace {
@@ -643,10 +659,24 @@ public:
     llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
     llvm::errs() << "loc: " << loc << " | op: " << *op << " | input: " << input << "\n";
     llvm::errs() << "call :"  << call << "\n";
+    // rewriter.replaceOp(op, {call});
     // Notify the rewriter that this operation has been removed.
-    rewriter.eraseOp(op);
+    // rewriter.eraseOp(op);
+    GetIOTokenOp iotok = rewriter.create<GetIOTokenOp>(loc);
+    // lmao, the fact that I need a cast<Value>(...) here is
+    // definitely WTF++ for me. You get punished for not using auto
+    // everywhere.
+    // rewriter.replaceOpWithNewOp<GetIOTokenOp>(op);
+
+    llvm::errs() << "iotok: " << iotok << " |iotokResult: " << iotok.getResult() << "\n";
+    // rewriter.replaceOp(op, iotok.getOperation()->getOpResult(0));
+    // rewriter.eraseOp(printOp);
+    rewriter.replaceOp(op, iotok.getResult());
+
+    // rewriter.replaceOpWithNewOp<GetIOTokenOp>(op);
     llvm::errs() << __FUNCTION__ << ":" << __LINE__ << "\n";
-    
+    llvm::errs() << "parent:vvvv\n"  << *call.getParentOp() << "\n^^^^^^\n";
+    // return failure();
     return success();
   }
 
@@ -719,14 +749,16 @@ void LeanToLLVMLoweringPass::runOnOperation() {
   // final target for this lowering. For this lowering, we are only targeting
   // the LLVM dialect.
   LLVMConversionTarget target(getContext());
-  target.addLegalOp<ModuleOp, ModuleTerminatorOp>();
+  target.addLegalDialect<lean::LeanDialect, mlir::StandardOpsDialect>();
+  target.addLegalOp<ModuleOp, ModuleTerminatorOp, FuncOp>();
+  // target.addLegalOp<FunctionOp>();
 
   // During this lowering, we will also be lowering the MemRef types, that are
   // currently being operated on, to a representation in LLVM. To perform this
   // conversion we use a TypeConverter as part of the lowering. This converter
   // details how one type maps to another. This is necessary now that we will be
   // doing more complicated lowerings, involving loop region arguments.
-  LLVMTypeConverter typeConverter(&getContext());
+  // LLVMTypeConverter typeConverter(&getContext());
 
   // Now that the conversion target has been defined, we need to provide the
   // patterns used for lowering. At this point of the compilation process, we
@@ -743,7 +775,7 @@ void LeanToLLVMLoweringPass::runOnOperation() {
 
   // The only remaining operation to lower from the `toy` dialect, is the
   // PrintOp.
-  patterns.insert<PrintOpLowering>(&getContext());
+  // patterns.insert<PrintOpLowering>(&getContext());
 
   // We want to completely lower to LLVM, so we use a `FullConversion`. This
   // ensures that only legal operations will remain after the conversion.
@@ -752,7 +784,9 @@ void LeanToLLVMLoweringPass::runOnOperation() {
   // if (failed(applyFullConversion(module, target, patterns)))
   //   signalPassFailure();
 
-  applyPartialConversion(module, target, patterns);
+  if (failed(applyPartialConversion(module, target, patterns))) {
+    signalPassFailure();
+  };
 }
 
 /// Create a pass for lowering operations the remaining `Toy` operations, as
@@ -760,6 +794,52 @@ void LeanToLLVMLoweringPass::runOnOperation() {
 std::unique_ptr<mlir::Pass> createLowerToLLVMPass() {
   return std::make_unique<LeanToLLVMLoweringPass>();
 }
+
+
+namespace {
+struct LowerPrintPass
+    : public PassWrapper<LowerPrintPass, FunctionPass> {
+  void runOnFunction() final;
+};
+} // end anonymous namespace.
+
+void LowerPrintPass::runOnFunction() {
+  auto function = getFunction();
+
+
+// assert(false )
+  // The first thing to define is the conversion target. This will define the
+  // final target for this lowering.
+  ConversionTarget target(getContext());
+
+  // We define the specific operations, or dialects, that are legal targets for
+  // this lowering. In our case, we are lowering to a combination of the
+  // `Affine` and `Standard` dialects.
+  target.addLegalDialect<LeanDialect, StandardOpsDialect>();
+
+  // We also define the Toy dialect as Illegal so that the conversion will fail
+  // if any of these operations are *not* converted. Given that we actually want
+  // a partial lowering, we explicitly mark the Toy operations that don't want
+  // to lower, `toy.print`, as `legal`.
+  target.addIllegalDialect<LeanDialect>();
+  // target.addLegalOp<PrintUnboxedIntOp>();
+
+  // Now that the conversion target has been defined, we just need to provide
+  // the set of patterns that will lower the Toy operations.
+  OwningRewritePatternList patterns;
+  patterns.insert<PrintOpLowering>(&getContext());
+
+  // With the target and rewrite patterns defined, we can now attempt the
+  // conversion. The conversion will signal failure if any of our `illegal`
+  // operations were not converted successfully.
+  if (failed(applyPartialConversion(getFunction(), target, patterns)))
+    signalPassFailure();
+}
+
+std::unique_ptr<mlir::Pass> createLowerPrintPass() {
+  return std::make_unique<LowerPrintPass>();
+}
+
 
 
 } // end namespace lean
