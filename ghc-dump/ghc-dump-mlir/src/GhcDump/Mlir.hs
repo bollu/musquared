@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ParallelListComp #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module GhcDump.Mlir
@@ -20,6 +21,7 @@ data PrettyOpts = PrettyOpts { showUniques    :: Bool
                              , showIdInfo     :: Bool
                              , showLetTypes   :: Bool
                              , showUnfoldings :: Bool
+                             , numArgs :: Int
                              }
 
 defaultPrettyOpts :: PrettyOpts
@@ -27,6 +29,7 @@ defaultPrettyOpts = PrettyOpts { showUniques    = False
                                , showIdInfo     = False
                                , showLetTypes   = False
                                , showUnfoldings = False
+                               , numArgs = 0
                                }
 -- orphan
 instance Pretty T.Text where
@@ -50,8 +53,8 @@ instance Pretty Binder where
 
 pprBinder :: PrettyOpts -> Binder -> Doc
 pprBinder opts b
-  | showUniques opts = pretty $ "\"-unique-" <> binderUniqueName b <> "\""
-  | otherwise        = pretty $ "\"" <> (binderName $ unBndr b) <> "\""
+  | showUniques opts = pretty $ "%uniquebinder-" <> binderUniqueName b 
+  | otherwise        = pretty $ "%binder-" <> (binderName $ unBndr b)
 
 instance Pretty TyCon where
     pretty (TyCon t _) = text $ T.unpack t
@@ -61,7 +64,7 @@ pprRational r = pretty (numerator r) <> "/" <> pretty (denominator r)
 
 instance Pretty Lit where
     pretty (MachChar x) = "'" <> char x <> "'#"
-    pretty (MachStr x) = "\"" <> text (BS.unpack x) <> "\"#"
+    pretty (MachStr x) = "\"" <> text (BS.unpack x) <> "\""
     pretty MachNullAddr = "nullAddr#"
     pretty (MachInt x) = pretty x <> "#"
     pretty (MachInt64 x) = pretty x <> "#"
@@ -152,35 +155,62 @@ maybeParens False = id
 instance Pretty Type where
     pretty = pprType defaultPrettyOpts
 
+
+pprDebugDoubleQuote :: Doc -> Doc
+pprDebugDoubleQuote d = "\"" <> d <> "\""
+
+pprDebugName :: String -> Doc -> Doc
+pprDebugName name d = pprDebugDoubleQuote (pretty name) <+> "(" <> d <> ")"
+
 pprExpr :: PrettyOpts -> Expr -> Doc
 pprExpr opts = pprExpr' opts False
 
+
+arglist :: Int -> [Doc] -> Doc
+arglist start ds = hsep ["%arg-" <> pretty ix <> " = " <> d | d <- ds | ix <- [start,start+1..] :: [Int]]
+
+pprDebugCoreAppRetty :: Doc
+pprDebugCoreAppRetty = "() -> (!core.untyped)"
+
+updOpts :: Int -> PrettyOpts -> PrettyOpts
+updOpts n opts = opts { numArgs = (numArgs opts) + n }
+
 pprExpr' :: PrettyOpts -> Bool -> Expr -> Doc
-pprExpr' opts _parens (EVar v)         = pprBinder opts v
-pprExpr' opts _parens (EVarGlobal v)   = pretty v
-pprExpr' opts _parens (ELit l)         = pretty l
-pprExpr' opts parens  e@(EApp{})       = let (x, ys) = collectArgs e
-                                         in maybeParens parens $ hang' (pprExpr' opts True x) 2 (sep $ map pprArg ys)
-  where pprArg (EType t) = char '@' <> pprType' opts TyConPrec t
-        pprArg x         = pprExpr' opts True x
-pprExpr' opts parens  x@(ETyLam _ _)   = let (bs, x') = collectTyBinders x
-                                         in maybeParens parens
-                                            $ hang' ("Λ" <+> sep (map (pprBinder opts) bs) <+> smallRArrow) 2 (pprExpr' opts False x')
+pprExpr' opts _parens (EVar v)         = pprDebugName "EVar" $ pprBinder opts v
+pprExpr' opts _parens (EVarGlobal v)   = pprDebugName "EvarGlobal" $ pretty v
+pprExpr' opts _parens (ELit l)         = (pprDebugDoubleQuote "core.ELit") <+> "()" <+> "{ value = " <> pretty l <> "} " <+> ":" <+> pprDebugCoreAppRetty
+pprExpr' opts parens  e@(EApp{})       = 
+    pprDebugDoubleQuote "core.EApp" <+> "()" <+> "({" <> (arglist (numArgs opts) $ [pprArg ix y | y <- ys | ix <- [0, 1..]]) <+> "})" <+> ":" <+> pprDebugCoreAppRetty
+    where
+        (x, ys) = collectArgs e
+        cumlen = [0, 100..]
+        pprArg ix (EType t) = char '@' <> pprType' (updOpts (cumlen !! ix) opts) TyConPrec t
+        pprArg ix x         = pprExpr' (updOpts (cumlen !! ix) opts) True x
+
+
+-- let (x, ys) = collectArgs e
+--                                          in pprDebugDoubleQuote "core.EApp" <+> "()" <+> "({" <> (arglist (numArgs opts) $ map pprArg ys) <+> "})" <+> ":" <+> pprDebugCoreAppRetty
+--   where pprArg (EType t) = char '@' <> pprType' opts' TyConPrec t
+--         pprArg x         = pprExpr' opts True x
+--         opts' = updOpts (length ys) opts
+pprExpr' opts parens  x@(ETyLam _ _)   = let (bs, x') =  collectTyBinders x
+                                         in pprDebugName "ETyLam" $ maybeParens parens
+                                                                    $ hang' ("Λ" <+> sep (map (pprBinder opts) bs) <+> smallRArrow) 2 (pprExpr' opts False x')
 pprExpr' opts parens  x@(ELam _ _)     = let (bs, x') = collectBinders x
-                                         in maybeParens parens
+                                         in pprDebugName "ELam" $ maybeParens parens
                                             $ hang' ("λ" <+> sep (map (pprBinder opts) bs) <+> smallRArrow) 2 (pprExpr' opts False x')
-pprExpr' opts parens  (ELet xs y)      = maybeParens parens $ "let" <+> (align $ vcat $ map (uncurry (pprBinding opts)) xs)
+pprExpr' opts parens  (ELet xs y)      = pprDebugName "ELet" $ maybeParens parens $ "let" <+> (align $ vcat $ map (uncurry (pprBinding opts)) xs)
                                          <$$> "in" <+> align (pprExpr' opts False y)
   where pprBind (b, rhs) = pprBinder opts b <+> equals <+> align (pprExpr' opts False rhs)
-pprExpr' opts parens  (ECase x b alts) = maybeParens parens
+pprExpr' opts parens  (ECase x b alts) = pprDebugName "ECase" $ maybeParens parens
                                          $ sep [ sep [ "case" <+> pprExpr' opts False x
                                                      , "of" <+> pprBinder opts b <+> "{" ]
                                                , indent 2 $ vcat $ map pprAlt alts
                                                , "}"
                                                ]
-  where pprAlt (Alt con bndrs rhs) = hang' (hsep (pretty con : map (pprBinder opts) bndrs) <+> smallRArrow) 2 (pprExpr' opts False rhs)
-pprExpr' opts parens  (EType t)        = maybeParens parens $ "TYPE:" <+> pprType opts t
-pprExpr' opts parens  ECoercion        = "CO"
+  where pprAlt (Alt con bndrs rhs) = pprDebugName "Alt" $ hang' (hsep (pretty con : map (pprBinder opts) bndrs) <+> smallRArrow) 2 (pprExpr' opts False rhs)
+pprExpr' opts parens  (EType t)        = pprDebugName "EType" $  maybeParens parens $ "TYPE:" <+> pprType opts t
+pprExpr' opts parens  ECoercion        = pprDebugName "ECoercion" $ "CO"
 
 instance Pretty AltCon where
     pretty (AltDataCon t) = text $ T.unpack t
@@ -203,9 +233,23 @@ pprTopBinding opts tb =
         <$$> hang' (pprBinder opts b <+> equals) 2 (pprExpr opts rhs)
         <> line
 
+prettyDebugComment :: Doc -> Doc
+prettyDebugComment d = "//" <+> d
+
 pprTypeSig :: PrettyOpts -> Binder -> Doc
 pprTypeSig opts b@(Bndr b') =
-    pprBinder opts b <+> dcolon <+> align (pprType opts (binderType b'))
+    prettyDebugComment $ pprBinder opts b <+> dcolon <+> align (pprType opts (binderType b'))
+
+{-
+pprBinding :: PrettyOpts -> Binder -> Expr -> Doc
+pprBinding opts b@(Bndr b'@Binder{}) rhs =
+    ppWhen (showLetTypes opts) (pprTypeSig opts b)
+    <$$> pprIdInfo opts (binderIdInfo b') (binderIdDetails b')
+    <$$> hang' (pprBinder opts b <+> equals) 2 (pprExpr opts rhs)
+pprBinding opts b@(Bndr TyBinder{}) rhs =
+    -- let-bound type variables: who knew?
+    hang' (pprBinder opts b <+> equals) 2 (pprExpr opts rhs)
+-}
 
 pprBinding :: PrettyOpts -> Binder -> Expr -> Doc
 pprBinding opts b@(Bndr b'@Binder{}) rhs =
@@ -223,8 +267,17 @@ instance Pretty TopBinding where
 pprTopBindingMlir :: PrettyOpts -> TopBinding -> Doc
 pprTopBindingMlir opts tb = 
     case tb of
-      NonRecTopBinding b s rhs -> "XXX-top-binding-XXX" -- pprTopBind (b, s, rhs)
-      RecTopBinding bs -> "XXX-rec-top-binding-XXX"
+      NonRecTopBinding b s rhs ->  pprTopBind (b, s, rhs)
+      RecTopBinding bs -> line <> vsep (map pprTopBind bs)
+      -- RecTopBinding bs -> pprDebugName "REC" $ 
+      --                           braces (line <> vsep (map pprTopBind bs))
+  where
+    pprTopBind (b@(Bndr b'),s,rhs) =
+        pprTypeSig opts b
+        <$$> pprIdInfo opts (binderIdInfo b') (binderIdDetails b')
+        <$$> comment (pretty s)
+        <$$> hang' (pprBinder opts b <+> equals) 2 (pprExpr opts rhs)
+        <> line
 
 
 pprModule :: PrettyOpts -> Module -> Doc

@@ -1,0 +1,12 @@
+// MLIR
+// desugar
+module @Main {
+
+    // %binder-$trModule :: Module
+
+    // Core Size{terms=5 types=0 cos=0 vbinds=0 jbinds=0}
+    %z = "core.ENew" () : () -> (!core.untyped)
+    %binder-$trModule =  "core.EApp" (%z) : (!core.untyped) -> (!core.untyped)
+    %binder-$trModule2 =  "core.EApp" () ({}) : () -> (!core.untyped)
+    %x = "EApp" () ({%x = "coreRet"() : () -> (!core.untyped) }) : () -> (!core<"untyped">)
+}
