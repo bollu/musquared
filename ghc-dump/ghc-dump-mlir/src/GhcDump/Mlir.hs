@@ -53,8 +53,8 @@ instance Pretty Binder where
 
 pprBinder :: PrettyOpts -> Binder -> Doc
 pprBinder opts b
-  | showUniques opts = pretty $ "%uniquebinder-" <> binderUniqueName b 
-  | otherwise        = pretty $ "%binder-" <> (binderName $ unBndr b)
+  | showUniques opts = (pretty $ "%uniquebinder-" <> binderUniqueName b) <>  "-" <> pretty (numArgs opts)
+  | otherwise        = (pretty $ "%binder-" <> (binderName $ unBndr b)) <> "-" <> pretty (numArgs opts)
 
 instance Pretty TyCon where
     pretty (TyCon t _) = text $ T.unpack t
@@ -292,7 +292,7 @@ pprModule opts m =
     <$$> comment (pretty $ modulePhase m)
     <$$> text "module" <+> ("@" <> pretty (moduleName m)) <+> "{" <> line
     -- <$$> vsep (map (pprTopBinding opts) (moduleTopBindings m)) 
-    <$$> vsep (map (pprTopBindingMlir opts) (moduleTopBindings m)) 
+    <$$> vsep ([pprTopBindingMlir (updOpts ix opts) bind | bind <- moduleTopBindings m | ix <- [1001, 2001..]])
     <$$> text "}"
 
 instance Pretty Module where
