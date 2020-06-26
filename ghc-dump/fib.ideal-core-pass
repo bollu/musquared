@@ -9,4 +9,6 @@ module @Main {
     %binder-$trModule =  "core.EApp" (%z) : (!core.untyped) -> (!core.untyped)
     %binder-$trModule2 =  "core.EApp" () ({}) : () -> (!core.untyped)
     %x = "EApp" () ({%x = "coreRet"() : () -> (!core.untyped) }) : () -> (!core<"untyped">)
+    // TODO: need the reigon to be scoped!
+    %y = "ELam" () ({^entry(%arg-x : !core.untyped): %z2 = "coreRet" () : () -> (!core.untyped) }) : () -> (!core<"untyped">)
 }

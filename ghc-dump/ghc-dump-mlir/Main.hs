@@ -92,7 +92,6 @@ modes = subparser
         run fname = do
            dump <- GhcDump.Util.readDump fname
            print $ pprModule defaultPrettyOpts dump
-           print "MLIR DONE"
       
 
     listBindingsMode =

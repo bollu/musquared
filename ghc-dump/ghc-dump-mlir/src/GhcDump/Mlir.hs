@@ -36,8 +36,8 @@ instance Pretty T.Text where
     pretty = text . T.unpack
 
 instance Pretty ExternalName where
-    pretty n@ExternalName{} = pretty (externalModuleName n) <> "." <> text (T.unpack $ externalName n)
-    pretty ForeignCall = "<foreign>"
+    pretty n@ExternalName{} = "\"" <> pretty (externalModuleName n) <> "." <> text (T.unpack $ externalName n) <> "\""
+    pretty ForeignCall = "\"" <> "<foreign>" <> "\""
 
 instance Pretty ModuleName where
     pretty = text . T.unpack . getModuleName
@@ -63,13 +63,13 @@ pprRational :: Rational -> Doc
 pprRational r = pretty (numerator r) <> "/" <> pretty (denominator r)
 
 instance Pretty Lit where
-    pretty (MachChar x) = "'" <> char x <> "'#"
+    pretty (MachChar x) = "'" <> char x <> "'"
     pretty (MachStr x) = "\"" <> text (BS.unpack x) <> "\""
     pretty MachNullAddr = "nullAddr#"
-    pretty (MachInt x) = pretty x <> "#"
-    pretty (MachInt64 x) = pretty x <> "#"
-    pretty (MachWord x) = pretty x <> "#"
-    pretty (MachWord64 x) = pretty x <> "##"
+    pretty (MachInt x) = pretty x 
+    pretty (MachInt64 x) = pretty x
+    pretty (MachWord x) = pretty x 
+    pretty (MachWord64 x) = pretty x
     pretty (MachFloat x) = "FLOAT" <> parens (pprRational x)
     pretty (MachDouble x) = "DOUBLE" <> parens (pprRational x)
     pretty (MachLabel x) = "LABEL"<> parens (pretty x)
@@ -137,11 +137,11 @@ pprType :: PrettyOpts -> Type -> Doc
 pprType opts = pprType' opts TopPrec
 
 pprType' :: PrettyOpts -> TyPrec -> Type -> Doc
-pprType' opts _ (VarTy b)         = pprBinder opts b
-pprType' opts p t@(FunTy _ _)     = maybeParens (p >= FunPrec) $ sep $ punctuate " ->" (map (pprType' opts FunPrec) (splitFunTys t))
-pprType' opts p (TyConApp tc [])  = pretty tc
-pprType' opts p (TyConApp tc tys) = maybeParens (p >= TyConPrec) $ pretty tc <+> hsep (map (pprType' opts TyConPrec) tys)
-pprType' opts p (AppTy a b)       = maybeParens (p >= TyConPrec) $ pprType' opts TyConPrec a <+> pprType' opts TyConPrec b
+pprType' opts _ (VarTy b)         = "core.VarTY-" <> pprBinder opts b
+pprType' opts p t@(FunTy _ _)     = "core.FUNTY-" <> (maybeParens (p >= FunPrec) $ sep $ punctuate " ->" (map (pprType' opts FunPrec) (splitFunTys t)))
+pprType' opts p (TyConApp tc [])  = (pprDebugDoubleQuote "core.TYCONAPP") <+>  "()" <+> "{ value = " <+> pprDebugDoubleQuote (pretty tc) <+> "}"  <+> ":" <+> pprDebugCoreAppRetty
+pprType' opts p (TyConApp tc tys) = "core.TYCONAPP-" <> (maybeParens (p >= TyConPrec) $ pretty tc <+> hsep (map (pprType' opts TyConPrec) tys))
+pprType' opts p (AppTy a b)       = "core.APPLYTY=" <> (maybeParens (p >= TyConPrec) $ pprType' opts TyConPrec a <+> pprType' opts TyConPrec b)
 pprType' opts p t@(ForAllTy _ _)  = let (bs, t') = splitForAlls t
                                     in maybeParens (p >= TyOpPrec)
                                        $ "forall" <+> hsep (map (pprBinder opts) bs) <> "." <+> pprType opts t'
@@ -176,15 +176,18 @@ updOpts :: Int -> PrettyOpts -> PrettyOpts
 updOpts n opts = opts { numArgs = (numArgs opts) + n }
 
 pprExpr' :: PrettyOpts -> Bool -> Expr -> Doc
-pprExpr' opts _parens (EVar v)         = pprDebugName "EVar" $ pprBinder opts v
-pprExpr' opts _parens (EVarGlobal v)   = pprDebugName "EvarGlobal" $ pretty v
+pprExpr' opts _parens (EVar v)         = (pprDebugDoubleQuote "core.EVar") <+>  "()" <+> "{ value = " <> pprBinder opts v <> "}" <+> ":" <+> pprDebugCoreAppRetty
+-- pprExpr' opts _parens (EVar v)         = pprDebugName "EVar" $ pprBinder opts v
+pprExpr' opts _parens (EVarGlobal v)   = (pprDebugDoubleQuote "EvarGlobal") <+> "()" <+> "{value = " <> pretty v <> "}" <+> ":" <+> pprDebugCoreAppRetty
+
+-- pprExpr' opts _parens (EVarGlobal v)   = (pprDebugName "core.EvarGlobal") <+> "()" <+> "{ value = " <> pretty v <> "}" <+> ":" <+> pprDebugCoreAppRetty
 pprExpr' opts _parens (ELit l)         = (pprDebugDoubleQuote "core.ELit") <+> "()" <+> "{ value = " <> pretty l <> "} " <+> ":" <+> pprDebugCoreAppRetty
 pprExpr' opts parens  e@(EApp{})       = 
     pprDebugDoubleQuote "core.EApp" <+> "()" <+> "({" <> (arglist (numArgs opts) $ [pprArg ix y | y <- ys | ix <- [0, 1..]]) <+> "})" <+> ":" <+> pprDebugCoreAppRetty
     where
         (x, ys) = collectArgs e
-        cumlen = [0, 100..]
-        pprArg ix (EType t) = char '@' <> pprType' (updOpts (cumlen !! ix) opts) TyConPrec t
+        cumlen = [100, 200..]
+        pprArg ix (EType t) = pprType' (updOpts (cumlen !! ix) opts) TyConPrec t
         pprArg ix x         = pprExpr' (updOpts (cumlen !! ix) opts) True x
 
 
@@ -196,9 +199,12 @@ pprExpr' opts parens  e@(EApp{})       =
 pprExpr' opts parens  x@(ETyLam _ _)   = let (bs, x') =  collectTyBinders x
                                          in pprDebugName "ETyLam" $ maybeParens parens
                                                                     $ hang' ("Λ" <+> sep (map (pprBinder opts) bs) <+> smallRArrow) 2 (pprExpr' opts False x')
-pprExpr' opts parens  x@(ELam _ _)     = let (bs, x') = collectBinders x
-                                         in pprDebugName "ELam" $ maybeParens parens
-                                            $ hang' ("λ" <+> sep (map (pprBinder opts) bs) <+> smallRArrow) 2 (pprExpr' opts False x')
+-- pprExpr' opts parens  x@(ELam _ _)     = let (bs, x') = collectBinders x
+--                                          in pprDebugName "ELam" $ maybeParens parens
+--                                             $ hang' ("λ" <+> sep (map (pprBinder opts) bs) <+> smallRArrow) 2 (pprExpr' opts False x')
+
+pprExpr' opts parens  x@(ELam _ _)     =  (pprDebugDoubleQuote "ELam") <+> "()" <+> ":" <+> pprDebugCoreAppRetty
+
 pprExpr' opts parens  (ELet xs y)      = pprDebugName "ELet" $ maybeParens parens $ "let" <+> (align $ vcat $ map (uncurry (pprBinding opts)) xs)
                                          <$$> "in" <+> align (pprExpr' opts False y)
   where pprBind (b, rhs) = pprBinder opts b <+> equals <+> align (pprExpr' opts False rhs)
