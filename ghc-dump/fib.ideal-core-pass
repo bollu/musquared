@@ -11,4 +11,5 @@ module @Main {
     %x = "EApp" () ({%x = "coreRet"() : () -> (!core.untyped) }) : () -> (!core<"untyped">)
     // TODO: need the reigon to be scoped!
     %y = "ELam" () ({^entry(%arg-x : !core.untyped): %z2 = "coreRet" () : () -> (!core.untyped) }) : () -> (!core<"untyped">)
+    %binder-fib-2001 = "core.ELam" () ({  ^entry: "core.foo" () : () -> (!core.untyped) }) : () -> (!core.untyped)
 }

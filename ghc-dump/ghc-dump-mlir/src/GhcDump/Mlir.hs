@@ -166,14 +166,21 @@ pprExpr :: PrettyOpts -> Expr -> Doc
 pprExpr opts = pprExpr' opts False
 
 
-arglist :: Int -> [Doc] -> Doc
-arglist start ds = hsep ["%arg-" <> pretty ix <> " = " <> d | d <- ds | ix <- [start,start+1..] :: [Int]]
+pprDebugRegionVarList :: Int -> [Doc] -> Doc
+pprDebugRegionVarList start ds = hsep ["%arg-" <> pretty ix <> " = " <> d | d <- ds | ix <- [start,start+1..] :: [Int]]
 
 pprDebugCoreAppRetty :: Doc
 pprDebugCoreAppRetty = "() -> (!core.untyped)"
 
 updOpts :: Int -> PrettyOpts -> PrettyOpts
 updOpts n opts = opts { numArgs = (numArgs opts) + n }
+
+pprDebugArgList :: Int -> [Doc] -> Doc
+pprDebugArgList start ds = hsep $ punctuate "," ["%arg-" <> pretty ix <> " = " <> d | d <- ds | ix <- [start,start+1..] :: [Int]]
+
+
+stubSubSubStubStubStub :: Doc
+stubSubSubStubStubStub =  "\"core.stub\" () : () -> (!core.untyped)"
 
 pprExpr' :: PrettyOpts -> Bool -> Expr -> Doc
 pprExpr' opts _parens (EVar v)         = (pprDebugDoubleQuote "core.EVar") <+>  "()" <+> "{ value = " <> pprBinder opts v <> "}" <+> ":" <+> pprDebugCoreAppRetty
@@ -183,7 +190,7 @@ pprExpr' opts _parens (EVarGlobal v)   = (pprDebugDoubleQuote "EvarGlobal") <+> 
 -- pprExpr' opts _parens (EVarGlobal v)   = (pprDebugName "core.EvarGlobal") <+> "()" <+> "{ value = " <> pretty v <> "}" <+> ":" <+> pprDebugCoreAppRetty
 pprExpr' opts _parens (ELit l)         = (pprDebugDoubleQuote "core.ELit") <+> "()" <+> "{ value = " <> pretty l <> "} " <+> ":" <+> pprDebugCoreAppRetty
 pprExpr' opts parens  e@(EApp{})       = 
-    pprDebugDoubleQuote "core.EApp" <+> "()" <+> "({" <> (arglist (numArgs opts) $ [pprArg ix y | y <- ys | ix <- [0, 1..]]) <+> "})" <+> ":" <+> pprDebugCoreAppRetty
+    pprDebugDoubleQuote "core.EApp" <+> "()" <+> "({" <> (pprDebugRegionVarList (numArgs opts) $ [pprArg ix y | y <- ys | ix <- [0, 1..]]) <+> "})" <+> ":" <+> pprDebugCoreAppRetty
     where
         (x, ys) = collectArgs e
         cumlen = [100, 200..]
@@ -192,18 +199,25 @@ pprExpr' opts parens  e@(EApp{})       =
 
 
 -- let (x, ys) = collectArgs e
---                                          in pprDebugDoubleQuote "core.EApp" <+> "()" <+> "({" <> (arglist (numArgs opts) $ map pprArg ys) <+> "})" <+> ":" <+> pprDebugCoreAppRetty
+--                                          in pprDebugDoubleQuote "core.EApp" <+> "()" <+> "({" <> (pprDebugRegionVarList (numArgs opts) $ map pprArg ys) <+> "})" <+> ":" <+> pprDebugCoreAppRetty
 --   where pprArg (EType t) = char '@' <> pprType' opts' TyConPrec t
 --         pprArg x         = pprExpr' opts True x
 --         opts' = updOpts (length ys) opts
 pprExpr' opts parens  x@(ETyLam _ _)   = let (bs, x') =  collectTyBinders x
                                          in pprDebugName "ETyLam" $ maybeParens parens
                                                                     $ hang' ("Λ" <+> sep (map (pprBinder opts) bs) <+> smallRArrow) 2 (pprExpr' opts False x')
--- pprExpr' opts parens  x@(ELam _ _)     = let (bs, x') = collectBinders x
---                                          in pprDebugName "ELam" $ maybeParens parens
---                                             $ hang' ("λ" <+> sep (map (pprBinder opts) bs) <+> smallRArrow) 2 (pprExpr' opts False x')
 
-pprExpr' opts parens  x@(ELam _ _)     =  (pprDebugDoubleQuote "ELam") <+> "()" <+> ":" <+> pprDebugCoreAppRetty
+-- pprExpr' opts parens  x@(ELam _ _)     =  (pprDebugDoubleQuote "ELam") <+> "()" <+> ":" <+> pprDebugCoreAppRetty
+
+
+pprExpr' opts parens  x@(ELam _ _)     = let (bs, x') = collectBinders x
+                                         in (pprDebugDoubleQuote "core.ELam") <+> "()" <+> 
+                                            "({" <>  
+                                            "^entry(" <> 
+                                            (hsep  $ punctuate "," [pprBinder opts b <> ":" <> pprDebugCoreAppRetty | b <- bs]) <> 
+                                            "):" 
+                                            <+> stubSubSubStubStubStub -- (pprExpr' opts False x') 
+                                            <+> "})" <+> ":" <+> pprDebugCoreAppRetty
 
 pprExpr' opts parens  (ELet xs y)      = pprDebugName "ELet" $ maybeParens parens $ "let" <+> (align $ vcat $ map (uncurry (pprBinding opts)) xs)
                                          <$$> "in" <+> align (pprExpr' opts False y)
