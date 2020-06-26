@@ -17,7 +17,7 @@ module @lean_mod {
     %print_stringy = "lean.print_unboxed_int"(%x)  : (i64) -> !lean.IO<none> loc("example/file/path":1:1)
     %print_incorrect = "lean.print_unboxed_int"(%x)  : (i64) -> f64 loc("example/file/path":1:1)
     %foo = "lean.bar"(%x)  : (i64) -> f64 loc("example/file/path":1:1)
-    %print_boxx = lean.case(%x : i64, i64, [%arg] {
+    %print_boxx = lean.case(%x : i64, i64, [%arg]  {
       %a = constant 20 : i64
       lean.return %arg : i64
     }, [%arg4] {

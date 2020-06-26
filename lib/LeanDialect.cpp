@@ -233,6 +233,7 @@ mlir::Type IOType::getElementType() {
 
 
 
+
 /// Parse an instance of a type registered to the toy dialect.
 mlir::Type LeanDialect::parseType(mlir::DialectAsmParser &parser) const {
   // Parse a struct type in the following form:
@@ -865,8 +866,33 @@ std::unique_ptr<mlir::Pass> createLowerPrintPass() {
 
 RegionKind HasDominanceScopeOp::getRegionKind(unsigned index) {
   return RegionKind::SSACFG;
+
+}RegionKind DominanceFreeScopeOp::getRegionKind(unsigned index) {
+  return RegionKind::Graph; // this is meaningless.
 }
+
+
+
+ParseResult parseDominanceFreeScopeOp(OpAsmParser &parser,
+                                             OperationState &result) {
+  // Parse the body region, and reuse the operand info as the argument info.
+  Region *body = result.addRegion();
+  if (parser.parseRegion(*body, /*arguments=*/{}, /*argTypes=*/{}))
+    return failure();
+
+  // magic++, wtf++;
+  // DominanceFreeScopeOp::ensureTerminator(*body, parser.getBuilder(), result.location);
+  return success();
+
+}
+
+void print(OpAsmPrinter &p, DominanceFreeScopeOp op) {
+  p << "test.dominance_free_scope ";
+  p.printRegion(op.region(), /*printEntryBlockArgs=*/false);
+}
+
 
 
 } // end namespace lean
 } // end namespace mlir
+

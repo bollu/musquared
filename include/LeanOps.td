@@ -150,6 +150,14 @@ def PrintUnboxedIntOp : Lean_Op<"print_unboxed_int"> {
 }
 */
 
+def TerminatorOp : Lean_Op<"finish", [Terminator]>;
+def SingleBlockImplicitTerminatorOp : Lean_Op<"SingleBlockImplicitTerminator",
+    [SingleBlockImplicitTerminator<"TerminatorOp">]> {
+  // let regions = (region SizedRegion<1>:$region);
+}
+
+
+
 def HasDominanceScopeOp : Lean_Op<"has_dominance_scope",  [
     DeclareOpInterfaceMethods<RegionKindInterface>]> {
   let summary =  "has dominance scope operation";
@@ -159,6 +167,20 @@ def HasDominanceScopeOp : Lean_Op<"has_dominance_scope",  [
 
   let regions = (region VariadicRegion<AnyRegion>:$regions);
   let results = (outs Variadic<AnyType>);
+}
+
+def DominanceFreeScopeOp : Lean_Op<"dominance_free_scope",  [
+    DeclareOpInterfaceMethods<RegionKindInterface>]> {
+    // , SingleBlockImplicitTerminator<"SingleBlockImplicitTerminatorOp">]> {
+  let summary =  "dominance-free scope operation";
+  let description = [{
+    Test op that defines a new dominance-free scope.
+  }];
+
+  // let regions = (region AnyRegion:$region);
+  let regions = (region SizedRegion<1>:$region);
+  let parser = [{ return ::parse$cppClass(parser, result); }];
+  let printer = [{ return ::print(p, *this); }];
 }
 
 

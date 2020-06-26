@@ -6,6 +6,16 @@ module {
   }
 
   
+  func @succeededDominanceFreeScope() -> () {
+  lean.dominance_free_scope {
+  // %1 is not dominated by its definition.
+    %z = lean.printUnboxedInt(%x)         
+    %x = constant 10 : i64
+    %y = lean.printUnboxedInt(%x)
+    "lean.terminator"() : () -> ()     
+  }
+  return
+  }
 }
 
 
