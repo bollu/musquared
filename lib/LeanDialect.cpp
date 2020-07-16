@@ -38,6 +38,12 @@
 #include "mlir/Transforms/InliningUtils.h"
 #include "llvm/ADT/StringSwitch.h"
 
+// pattern matching
+#include "mlir/IR/Matchers.h"
+#include "mlir/IR/PatternMatch.h"
+
+
+
 using namespace mlir;
 using namespace mlir::lean;
 
@@ -356,7 +362,8 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
                                       mlir::OperationState &result) {
   // Parse the input operand, the attribute dictionary, and the type of the
   // input.
-  mlir::OpAsmParser::OperandType inputOperand1;
+    /*
+     inputOperand1;
   mlir::OpAsmParser::OperandType inputOperand2;
   if (parser.parseOperand(inputOperand1) ||
       parser.parseComma() ||
@@ -375,6 +382,7 @@ mlir::ParseResult parseAwesomeAddOp(mlir::OpAsmParser &parser,
 
   // Where is the result.addType API?
   result.addTypes({parser.getBuilder().getIntegerType(64) });
+  */
 
   return mlir::success();
 }

@@ -29,7 +29,6 @@ def Lean_Dialect : Dialect {
     let description = [{
         A lean dialect in MLIR.
     }];
-
     let cppNamespace = "lean";
 }
 
@@ -85,7 +84,7 @@ def PrintUnboxedIntOp : Lean_Op<"printUnboxedInt"> {
 }
 
 
-def AwesomeAddOp : Lean_Op<"awesome_add"> {
+def AwesomeAddOp : Lean_Op<"awesome_add", [NoSideEffect]> {
   let summary = "element-wise addition operation";
   let description = [{
     The "awesomeadd" operation performs element-wise addition between two tensors.

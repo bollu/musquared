@@ -51,8 +51,28 @@
 // main =
 //   APP(GHC.TopHandler.runMainIO
 //     @() Main.main)
-module @Main {
 
-    // %binder-$trModule :: Module
 
-}
+
+
+
+"core.module" () ({
+  %altdefault = "core.case_default" () : () -> (none)
+  %alt_int_0 = constant 0 
+  %alt_int_1 = constant 1
+
+  %fact = "core.lambda" () ({
+        ^entry(%i: none):
+	          "core.case" (%i) ({
+	           	  	^entry(%ds: none): 
+	           	  			"core.case" (%ds, %altdefault, %alt_int_0, %alt_int_1) ({
+	           	  				^entry(%ds_arg: i64):
+	           	  					
+	           	  				"core.finish" () : () -> () 		
+	           	  			}): (none, none, i64, i64) -> (none) 
+	          		
+	          		"core.finish" () : () -> () 			
+	           }): (none) -> (none) 
+	          "core.finish" () : () -> ()
+  }): () -> (none)
+}): () -> ()
